@@ -25,16 +25,34 @@ import com.walmartlabs.concord.client.ConcordApiClient;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
+import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.OutputFrame;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.lifecycle.Startable;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class Concord implements TestRule {
+
+    private Map<String, String> serverExtDirectories = new HashMap<>();
+    private String serverClassesDirectory;
 
     private GenericContainer<?> server;
     private String adminApiToken;
+
+    /**
+     * Return the server API prefix, e.g. http://localhost:8001
+     */
+    public String apiUrlPrefix() {
+        if (!server.isRunning()) {
+            throw new IllegalStateException("Requires a running Concord server.");
+        }
+
+        return "http://localhost:" + server.getFirstMappedPort();
+    }
 
     /**
      * Returns the default admin API token.
@@ -49,8 +67,27 @@ public class Concord implements TestRule {
      * @see #adminApiToken()
      */
     public ApiClient apiClient() {
-        return new ConcordApiClient("http://localhost:" + server.getFirstMappedPort())
+        return new ConcordApiClient(apiUrlPrefix())
                 .setApiKey(adminApiToken);
+    }
+
+    /**
+     * Path to the directory to be mounted as the server's "ext" directory.
+     * E.g. to mount 3rd-party server plugins.
+     */
+    public Concord serverExtDirectory(String name, String source) {
+        serverExtDirectories.put(name, source);
+        return this;
+    }
+
+    /**
+     * Path to the directory to be mounted as the server's additional classes directory.
+     * Useful to test plugins without building any JARs, just by mounting the target/classes
+     * directory directly.
+     */
+    public Concord serverClassesDirectory(String serverClassesDirectory) {
+        this.serverClassesDirectory = serverClassesDirectory;
+        return this;
     }
 
     /**
@@ -83,24 +120,36 @@ public class Concord implements TestRule {
         };
     }
 
-    private static GenericContainer<?> db(Network network) {
+    private GenericContainer<?> db(Network network) {
         return new GenericContainer<>("library/postgres:10")
                 .withEnv("POSTGRES_PASSWORD", "q1")
                 .withNetworkAliases("db")
                 .withNetwork(network);
     }
 
-    private static GenericContainer<?> server(Network network, Startable db) {
-        return new GenericContainer<>("walmartlabs/concord-server:latest")
+    private GenericContainer<?> server(Network network, Startable db) {
+        GenericContainer<?> c = new GenericContainer<>("walmartlabs/concord-server:latest")
                 .dependsOn(db)
                 .withEnv("DB_URL", "jdbc:postgresql://db:5432/postgres")
                 .withNetworkAliases("server")
                 .withNetwork(network)
                 .withExposedPorts(8001)
                 .waitingFor(Wait.forHttp("/api/v1/server/ping"));
+
+        serverExtDirectories.forEach((name, src) -> c.withFileSystemBind(src, "/opt/concord/server/ext/" + name, BindMode.READ_ONLY));
+
+        if (serverClassesDirectory != null) {
+            String src = serverClassesDirectory;
+            if (!src.startsWith("/")) {
+                src = System.getProperty("user.dir") + "/" + src;
+            }
+            c.withFileSystemBind(src, "/opt/concord/server/classes/", BindMode.READ_ONLY);
+        }
+
+        return c;
     }
 
-    private static GenericContainer<?> agent(Network network, Startable server) {
+    private GenericContainer<?> agent(Network network, Startable server) {
         return new GenericContainer<>("walmartlabs/concord-agent:latest")
                 .dependsOn(server)
                 .withNetwork(network)
