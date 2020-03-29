@@ -5,6 +5,12 @@
 
     <modelVersion>4.0.0</modelVersion>
 
+    <parent>
+        <groupId>io.takari</groupId>
+        <artifactId>takari</artifactId>
+        <version>27</version>
+    </parent>
+
     <groupId>ca.ibodrov.concord</groupId>
     <artifactId>testcontainers-concord</artifactId>
     <version>0.0.1-SNAPSHOT</version>
@@ -92,4 +98,9 @@
             </plugin>
         </plugins>
     </build>
+
+    <scm>
+        <developerConnection>scm:git:git@github.com:concord-workflow/testcontainers-concord.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
 </project>
