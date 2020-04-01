@@ -25,10 +25,13 @@ import com.walmartlabs.concord.client.ConcordApiClient;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.OutputFrame;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.ImagePullPolicy;
 import org.testcontainers.images.PullPolicy;
@@ -39,12 +42,17 @@ import java.util.Map;
 
 public class Concord implements TestRule {
 
+    private static Logger logger = LoggerFactory.getLogger(Concord.class);
+
     private Map<String, String> serverExtDirectories = new HashMap<>();
     private String version = "latest";
     private String serverClassesDirectory;
 
     private GenericContainer<?> server;
     private String adminApiToken;
+
+    private boolean streamServerLogs;
+    private boolean streamAgentLogs;
 
     /**
      * Return the server API prefix, e.g. http://localhost:8001
@@ -102,6 +110,22 @@ public class Concord implements TestRule {
     }
 
     /**
+     * Stream the server logs to the console.
+     */
+    public Concord streamServerLogs(boolean streamServerLogs) {
+        this.streamServerLogs = streamServerLogs;
+        return this;
+    }
+
+    /**
+     * Stream the agent logs to the console.
+     */
+    public Concord streamAgentLogs(boolean streamAgentLogs) {
+        this.streamAgentLogs = streamAgentLogs;
+        return this;
+    }
+
+    /**
      * Utilities to work with Concord processes.
      */
     public Processes processes() {
@@ -119,8 +143,18 @@ public class Concord implements TestRule {
                      GenericContainer<?> agent = agent(network, db)) {
 
                     db.start();
+
                     server.start();
+                    if (streamServerLogs) {
+                        Slf4jLogConsumer serverLogConsumer = new Slf4jLogConsumer(logger);
+                        server.followOutput(serverLogConsumer);
+                    }
+
                     agent.start();
+                    if (streamAgentLogs) {
+                        Slf4jLogConsumer agentLogConsumer = new Slf4jLogConsumer(logger);
+                        server.followOutput(agentLogConsumer);
+                    }
 
                     Concord.this.server = server;
                     Concord.this.adminApiToken = getApiToken(server.getLogs(OutputFrame.OutputType.STDOUT));
