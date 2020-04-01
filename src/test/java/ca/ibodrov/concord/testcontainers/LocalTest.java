@@ -26,15 +26,11 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertNotNull;
 
-public class RuleTest {
+public class LocalTest {
 
     @ClassRule
-    public static Concord concord = new Concord();
-
-    @Test
-    public void testAdminApiToken() {
-        assertNotNull(concord.adminApiToken());
-    }
+    public static Concord concord = new Concord()
+            .localMode(true);
 
     @Test
     public void testSimpleFlow() throws Exception {

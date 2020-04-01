@@ -9,9 +9,9 @@ package ca.ibodrov.concord.testcontainers;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,9 +24,9 @@ import com.google.gson.reflect.TypeToken;
 import com.squareup.okhttp.Call;
 import com.walmartlabs.concord.ApiClient;
 import com.walmartlabs.concord.ApiException;
-import com.walmartlabs.concord.client.ProcessApi;
 import com.walmartlabs.concord.client.ProcessEntry;
 import com.walmartlabs.concord.client.ProcessEntry.StatusEnum;
+import com.walmartlabs.concord.client.ProcessV2Api;
 import org.intellij.lang.annotations.Language;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,14 +74,14 @@ public final class ConcordProcess {
      * @return the process queue entry for the process.
      */
     public ProcessEntry waitForStatus(StatusEnum status, StatusEnum... more) throws ApiException {
-        ProcessApi api = new ProcessApi(client);
+        ProcessV2Api api = new ProcessV2Api(client);
 
         int retries = 10;
 
         ProcessEntry pe;
         while (true) {
             try {
-                pe = api.get(instanceId);
+                pe = api.get(instanceId, Collections.emptyList());
                 if (pe.getStatus() == StatusEnum.FINISHED || pe.getStatus() == StatusEnum.FAILED || pe.getStatus() == StatusEnum.CANCELLED) {
                     return pe;
                 }

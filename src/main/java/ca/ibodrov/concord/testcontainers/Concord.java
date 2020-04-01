@@ -25,51 +25,30 @@ import com.walmartlabs.concord.client.ConcordApiClient;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.testcontainers.containers.BindMode;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.Network;
-import org.testcontainers.containers.output.OutputFrame;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.images.ImagePullPolicy;
-import org.testcontainers.images.PullPolicy;
-import org.testcontainers.lifecycle.Startable;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class Concord implements TestRule {
-
-    private static Logger logger = LoggerFactory.getLogger(Concord.class);
 
     private String version = "latest";
     private String serverExtDirectory;
     private String serverClassesDirectory;
-
-    private GenericContainer<?> server;
-    private String adminApiToken;
-
     private boolean streamServerLogs;
     private boolean streamAgentLogs;
+    private boolean localMode;
+
+    private ConcordEnvironment environment;
 
     /**
      * Return the server API prefix, e.g. http://localhost:8001
      */
     public String apiUrlPrefix() {
-        if (!server.isRunning()) {
-            throw new IllegalStateException("Requires a running Concord server.");
-        }
-
-        return "http://localhost:" + server.getFirstMappedPort();
+        return "http://localhost:" + environment.apiPort();
     }
 
     /**
      * Returns the default admin API token.
      */
     public String adminApiToken() {
-        return adminApiToken;
+        return environment.apiToken();
     }
 
     /**
@@ -79,7 +58,11 @@ public class Concord implements TestRule {
      */
     public ApiClient apiClient() {
         return new ConcordApiClient(apiUrlPrefix())
-                .setApiKey(adminApiToken);
+                .setApiKey(environment.apiToken());
+    }
+
+    public String version() {
+        return version;
     }
 
     /**
@@ -90,6 +73,10 @@ public class Concord implements TestRule {
         return this;
     }
 
+    public String serverExtDirectory() {
+        return serverExtDirectory;
+    }
+
     /**
      * Path to the directory to be mounted as the server's "ext" directory.
      * E.g. to mount 3rd-party server plugins.
@@ -97,6 +84,10 @@ public class Concord implements TestRule {
     public Concord serverExtDirectory(String serverExtDirectory) {
         this.serverExtDirectory = serverExtDirectory;
         return this;
+    }
+
+    public String serverClassesDirectory() {
+        return serverClassesDirectory;
     }
 
     /**
@@ -109,6 +100,10 @@ public class Concord implements TestRule {
         return this;
     }
 
+    public boolean streamServerLogs() {
+        return streamServerLogs;
+    }
+
     /**
      * Stream the server logs to the console.
      */
@@ -117,11 +112,30 @@ public class Concord implements TestRule {
         return this;
     }
 
+    public boolean streamAgentLogs() {
+        return streamAgentLogs;
+    }
+
     /**
      * Stream the agent logs to the console.
      */
     public Concord streamAgentLogs(boolean streamAgentLogs) {
         this.streamAgentLogs = streamAgentLogs;
+        return this;
+    }
+
+    /**
+     * Enable local mode. In the local mode the Server and the Agent are
+     * started in the current JVM directly, without using Docker.
+     * Only the database is started in a container.
+     * <p/>
+     * Useful for debugging, i.e. it is possible to set a breakpoint in
+     * the server's (or a server plugin's) code while running a test.
+     * <p/>
+     * Default is {@code false}.
+     */
+    public Concord localMode(boolean localMode) {
+        this.localMode = localMode;
         return this;
     }
 
@@ -137,92 +151,20 @@ public class Concord implements TestRule {
         return new Statement() {
             @Override
             public void evaluate() throws Throwable {
-                try (Network network = Network.newNetwork();
-                     GenericContainer<?> db = db(network);
-                     GenericContainer<?> server = server(network, db);
-                     GenericContainer<?> agent = agent(network, db)) {
-
-                    db.start();
-
-                    server.start();
-                    if (streamServerLogs) {
-                        Slf4jLogConsumer serverLogConsumer = new Slf4jLogConsumer(logger);
-                        server.followOutput(serverLogConsumer);
-                    }
-
-                    agent.start();
-                    if (streamAgentLogs) {
-                        Slf4jLogConsumer agentLogConsumer = new Slf4jLogConsumer(logger);
-                        server.followOutput(agentLogConsumer);
-                    }
-
-                    Concord.this.server = server;
-                    Concord.this.adminApiToken = getApiToken(server.getLogs(OutputFrame.OutputType.STDOUT));
-
+                try (ConcordEnvironment env = createEnvironment()) {
+                    env.start();
+                    Concord.this.environment = env;
                     base.evaluate();
                 }
             }
         };
     }
 
-    private GenericContainer<?> db(Network network) {
-        return new GenericContainer<>("library/postgres:10")
-                .withEnv("POSTGRES_PASSWORD", "q1")
-                .withNetworkAliases("db")
-                .withNetwork(network);
-    }
-
-    private GenericContainer<?> server(Network network, Startable db) {
-        GenericContainer<?> c = new GenericContainer<>("walmartlabs/concord-server:" + version)
-                .dependsOn(db)
-                .withImagePullPolicy(pullPolicy())
-                .withEnv("DB_URL", "jdbc:postgresql://db:5432/postgres")
-                .withNetworkAliases("server")
-                .withNetwork(network)
-                .withExposedPorts(8001)
-                .waitingFor(Wait.forHttp("/api/v1/server/ping"));
-
-        if (serverExtDirectory != null) {
-            c.withFileSystemBind(serverExtDirectory, "/opt/concord/server/ext", BindMode.READ_ONLY);
+    private ConcordEnvironment createEnvironment() {
+        if (localMode) {
+            return new ConcordLocalEnvironment();
         }
 
-        if (serverClassesDirectory != null) {
-            String src = serverClassesDirectory;
-            if (!src.startsWith("/")) {
-                src = System.getProperty("user.dir") + "/" + src;
-            }
-            c.withFileSystemBind(src, "/opt/concord/server/classes/", BindMode.READ_ONLY);
-        }
-
-        return c;
-    }
-
-    private GenericContainer<?> agent(Network network, Startable server) {
-        return new GenericContainer<>("walmartlabs/concord-agent:" + version)
-                .dependsOn(server)
-                .withImagePullPolicy(pullPolicy())
-                .withNetwork(network)
-                .withEnv("SERVER_API_BASE_URL", "http://server:8001")
-                .withEnv("SERVER_WEBSOCKET_URL", "ws://server:8001/websocket");
-    }
-
-    private ImagePullPolicy pullPolicy() {
-        if(version.equals("latest")) {
-            return PullPolicy.alwaysPull();
-        }
-        return PullPolicy.defaultPolicy();
-    }
-
-    private static String getApiToken(String s) {
-        String msg = "API token created: ";
-        int start = s.indexOf(msg);
-        if (start >= 0) {
-            int end = s.indexOf('\n', start);
-            if (end >= 0) {
-                return s.substring(start + msg.length(), end);
-            }
-        }
-
-        throw new IllegalArgumentException("Can't find the API token in logs");
+        return new ConcordDockerEnvironment(this);
     }
 }
