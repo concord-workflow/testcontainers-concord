@@ -30,6 +30,8 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.OutputFrame;
 import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.images.ImagePullPolicy;
+import org.testcontainers.images.PullPolicy;
 import org.testcontainers.lifecycle.Startable;
 
 import java.util.HashMap;
@@ -38,6 +40,7 @@ import java.util.Map;
 public class Concord implements TestRule {
 
     private Map<String, String> serverExtDirectories = new HashMap<>();
+    private String version = "latest";
     private String serverClassesDirectory;
 
     private GenericContainer<?> server;
@@ -69,6 +72,14 @@ public class Concord implements TestRule {
     public ApiClient apiClient() {
         return new ConcordApiClient(apiUrlPrefix())
                 .setApiKey(adminApiToken);
+    }
+
+    /**
+     * The version of Concord to be used for testing.
+     */
+    public Concord version(String version) {
+        this.version = version;
+        return this;
     }
 
     /**
@@ -128,8 +139,9 @@ public class Concord implements TestRule {
     }
 
     private GenericContainer<?> server(Network network, Startable db) {
-        GenericContainer<?> c = new GenericContainer<>("walmartlabs/concord-server:latest")
+        GenericContainer<?> c = new GenericContainer<>("walmartlabs/concord-server:" + version)
                 .dependsOn(db)
+                .withImagePullPolicy(pullPolicy())
                 .withEnv("DB_URL", "jdbc:postgresql://db:5432/postgres")
                 .withNetworkAliases("server")
                 .withNetwork(network)
@@ -150,11 +162,19 @@ public class Concord implements TestRule {
     }
 
     private GenericContainer<?> agent(Network network, Startable server) {
-        return new GenericContainer<>("walmartlabs/concord-agent:latest")
+        return new GenericContainer<>("walmartlabs/concord-agent:" + version)
                 .dependsOn(server)
+                .withImagePullPolicy(pullPolicy())
                 .withNetwork(network)
                 .withEnv("SERVER_API_BASE_URL", "http://server:8001")
                 .withEnv("SERVER_WEBSOCKET_URL", "ws://server:8001/websocket");
+    }
+
+    private ImagePullPolicy pullPolicy() {
+        if(version.equals("latest")) {
+            return PullPolicy.alwaysPull();
+        }
+        return PullPolicy.defaultPolicy();
     }
 
     private static String getApiToken(String s) {
