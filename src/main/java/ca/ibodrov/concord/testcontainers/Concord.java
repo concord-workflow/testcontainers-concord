@@ -25,11 +25,16 @@ import com.walmartlabs.concord.client.ConcordApiClient;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.OutputFrame;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.images.ImagePullPolicy;
+import org.testcontainers.images.PullPolicy;
 import org.testcontainers.lifecycle.Startable;
 
 import java.util.HashMap;
@@ -37,11 +42,17 @@ import java.util.Map;
 
 public class Concord implements TestRule {
 
+    private static Logger logger = LoggerFactory.getLogger(Concord.class);
+
     private Map<String, String> serverExtDirectories = new HashMap<>();
+    private String version = "latest";
     private String serverClassesDirectory;
 
     private GenericContainer<?> server;
     private String adminApiToken;
+
+    private boolean streamServerLogs;
+    private boolean streamAgentLogs;
 
     /**
      * Return the server API prefix, e.g. http://localhost:8001
@@ -72,6 +83,14 @@ public class Concord implements TestRule {
     }
 
     /**
+     * The version of Concord to be used for testing.
+     */
+    public Concord version(String version) {
+        this.version = version;
+        return this;
+    }
+
+    /**
      * Path to the directory to be mounted as the server's "ext" directory.
      * E.g. to mount 3rd-party server plugins.
      */
@@ -87,6 +106,22 @@ public class Concord implements TestRule {
      */
     public Concord serverClassesDirectory(String serverClassesDirectory) {
         this.serverClassesDirectory = serverClassesDirectory;
+        return this;
+    }
+
+    /**
+     * Stream the server logs to the console.
+     */
+    public Concord streamServerLogs(boolean streamServerLogs) {
+        this.streamServerLogs = streamServerLogs;
+        return this;
+    }
+
+    /**
+     * Stream the agent logs to the console.
+     */
+    public Concord streamAgentLogs(boolean streamAgentLogs) {
+        this.streamAgentLogs = streamAgentLogs;
         return this;
     }
 
@@ -108,8 +143,18 @@ public class Concord implements TestRule {
                      GenericContainer<?> agent = agent(network, db)) {
 
                     db.start();
+
                     server.start();
+                    if (streamServerLogs) {
+                        Slf4jLogConsumer serverLogConsumer = new Slf4jLogConsumer(logger);
+                        server.followOutput(serverLogConsumer);
+                    }
+
                     agent.start();
+                    if (streamAgentLogs) {
+                        Slf4jLogConsumer agentLogConsumer = new Slf4jLogConsumer(logger);
+                        server.followOutput(agentLogConsumer);
+                    }
 
                     Concord.this.server = server;
                     Concord.this.adminApiToken = getApiToken(server.getLogs(OutputFrame.OutputType.STDOUT));
@@ -128,8 +173,9 @@ public class Concord implements TestRule {
     }
 
     private GenericContainer<?> server(Network network, Startable db) {
-        GenericContainer<?> c = new GenericContainer<>("walmartlabs/concord-server:latest")
+        GenericContainer<?> c = new GenericContainer<>("walmartlabs/concord-server:" + version)
                 .dependsOn(db)
+                .withImagePullPolicy(pullPolicy())
                 .withEnv("DB_URL", "jdbc:postgresql://db:5432/postgres")
                 .withNetworkAliases("server")
                 .withNetwork(network)
@@ -150,11 +196,19 @@ public class Concord implements TestRule {
     }
 
     private GenericContainer<?> agent(Network network, Startable server) {
-        return new GenericContainer<>("walmartlabs/concord-agent:latest")
+        return new GenericContainer<>("walmartlabs/concord-agent:" + version)
                 .dependsOn(server)
+                .withImagePullPolicy(pullPolicy())
                 .withNetwork(network)
                 .withEnv("SERVER_API_BASE_URL", "http://server:8001")
                 .withEnv("SERVER_WEBSOCKET_URL", "ws://server:8001/websocket");
+    }
+
+    private ImagePullPolicy pullPolicy() {
+        if(version.equals("latest")) {
+            return PullPolicy.alwaysPull();
+        }
+        return PullPolicy.defaultPolicy();
     }
 
     private static String getApiToken(String s) {
