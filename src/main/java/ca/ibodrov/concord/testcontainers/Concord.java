@@ -44,8 +44,8 @@ public class Concord implements TestRule {
 
     private static Logger logger = LoggerFactory.getLogger(Concord.class);
 
-    private Map<String, String> serverExtDirectories = new HashMap<>();
     private String version = "latest";
+    private String serverExtDirectory;
     private String serverClassesDirectory;
 
     private GenericContainer<?> server;
@@ -94,8 +94,8 @@ public class Concord implements TestRule {
      * Path to the directory to be mounted as the server's "ext" directory.
      * E.g. to mount 3rd-party server plugins.
      */
-    public Concord serverExtDirectory(String name, String source) {
-        serverExtDirectories.put(name, source);
+    public Concord serverExtDirectory(String serverExtDirectory) {
+        this.serverExtDirectory = serverExtDirectory;
         return this;
     }
 
@@ -182,7 +182,9 @@ public class Concord implements TestRule {
                 .withExposedPorts(8001)
                 .waitingFor(Wait.forHttp("/api/v1/server/ping"));
 
-        serverExtDirectories.forEach((name, src) -> c.withFileSystemBind(src, "/opt/concord/server/ext/" + name, BindMode.READ_ONLY));
+        if (serverExtDirectory != null) {
+            c.withFileSystemBind(serverExtDirectory, "/opt/concord/server/ext", BindMode.READ_ONLY);
+        }
 
         if (serverClassesDirectory != null) {
             String src = serverClassesDirectory;
