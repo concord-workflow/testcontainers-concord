@@ -74,8 +74,8 @@ Requires additional Maven configuration:
                 <version>3.1.2</version>
                 <executions>
                     <execution>
-                        <id>copy</id>
-                        <phase>process-resources</phase>
+                        <id>copy-runner-jar</id>
+                        <phase>process-test-resources</phase>
                         <goals>
                             <goal>copy</goal>
                         </goals>
