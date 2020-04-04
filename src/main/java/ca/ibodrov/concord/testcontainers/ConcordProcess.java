@@ -52,6 +52,10 @@ public final class ConcordProcess {
         this.instanceId = instanceId;
     }
 
+    public UUID instanceId() {
+        return instanceId;
+    }
+
     /**
      * Waits for the process to reach the specified status. Throws an exception if
      * the process ends up in an unexpected status.
