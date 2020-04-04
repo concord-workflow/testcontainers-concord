@@ -29,7 +29,6 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.walmartlabs.concord.agent.Agent;
 import com.walmartlabs.concord.server.ConcordServer;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
@@ -37,6 +36,7 @@ import org.testcontainers.containers.GenericContainer;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Base64;
 import java.util.concurrent.ThreadLocalRandom;
@@ -47,17 +47,20 @@ public class ConcordLocalEnvironment implements ConcordEnvironment {
 
     private final GenericContainer<?> db;
     private final String apiToken;
+    private final String pathToRunnerV1;
 
     private ConcordServer server;
     private Agent agent;
 
-    public ConcordLocalEnvironment() {
+    public ConcordLocalEnvironment(Concord opts) {
         this.db = new GenericContainer<>("library/postgres:10")
                 .withEnv("POSTGRES_PASSWORD", "q1")
                 .withNetworkAliases("db")
                 .withExposedPorts(5432);
 
         this.apiToken = randomToken();
+
+        this.pathToRunnerV1 = opts.pathToRunnerV1();
     }
 
     @Override
@@ -72,21 +75,17 @@ public class ConcordLocalEnvironment implements ConcordEnvironment {
 
     @Override
     public void start() {
+        assertRunnerJar(pathToRunnerV1);
+
         this.db.start();
 
         try {
-            Path conf = Files.createTempFile("server", ".conf");
-
-            String s = Resources.toString(ConcordLocalEnvironment.class.getResource("local/concord.conf"), Charsets.UTF_8);
-            s = s.replaceAll("DB_URL", "jdbc:postgresql://localhost:" + db.getFirstMappedPort() + "/postgres");
-            s = s.replaceAll("API_TOKEN", apiToken);
-            Files.write(conf, s.getBytes(), StandardOpenOption.TRUNCATE_EXISTING);
-
+            Path conf = prepareConfigurationFile();
             System.setProperty("ollie.conf", conf.toAbsolutePath().toString());
 
             this.server = ConcordServer.start();
 
-            waitForHttp("/api/v1/server/ping", 60000);
+            waitForHttp("http://localhost:" + apiPort() + "/api/v1/server/ping", 60000);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -118,6 +117,18 @@ public class ConcordLocalEnvironment implements ConcordEnvironment {
         this.db.stop();
     }
 
+    private Path prepareConfigurationFile() throws IOException {
+        Path dst = Files.createTempFile("server", ".dst");
+
+        String s = Resources.toString(ConcordLocalEnvironment.class.getResource("local/concord.conf"), Charsets.UTF_8);
+        s = s.replaceAll("DB_URL", "jdbc:postgresql://localhost:" + db.getFirstMappedPort() + "/postgres");
+        s = s.replaceAll("API_TOKEN", apiToken);
+        s = s.replaceAll("RUNNER_V1_PATH", pathToRunnerV1);
+        Files.write(dst, s.getBytes(), StandardOpenOption.TRUNCATE_EXISTING);
+
+        return dst;
+    }
+
     private static String randomToken() {
         byte[] ab = new byte[16];
         ThreadLocalRandom.current().nextBytes(ab);
@@ -126,12 +137,12 @@ public class ConcordLocalEnvironment implements ConcordEnvironment {
         return e.encodeToString(ab);
     }
 
-    private void waitForHttp(String url, long timeout) throws IOException {
+    private static void waitForHttp(String url, long timeout) throws IOException {
         long t0 = System.currentTimeMillis();
 
         OkHttpClient client = new OkHttpClient();
         Request req = new Request.Builder()
-                .url("http://localhost:" + apiPort() + url)
+                .url(url)
                 .build();
 
         while (true) {
@@ -156,6 +167,15 @@ public class ConcordLocalEnvironment implements ConcordEnvironment {
                 Thread.currentThread().interrupt();
                 break;
             }
+        }
+    }
+
+    private static void assertRunnerJar(String path) {
+        Path p = Paths.get(path);
+        if (!Files.exists(p)) {
+            throw new IllegalStateException("Runner JAR not found: " + path + ". " +
+                    "If you're copying the JAR using Maven, make sure you run the build first. " +
+                    "Otherwise check the path in Concord#pathToRunnerV1 parameter.");
         }
     }
 }

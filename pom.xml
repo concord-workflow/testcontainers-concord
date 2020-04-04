@@ -7,6 +7,7 @@
         <groupId>io.takari</groupId>
         <artifactId>takari</artifactId>
         <version>27</version>
+        <relativePath/>
     </parent>
 
     <groupId>ca.ibodrov.concord</groupId>
@@ -154,6 +155,33 @@
                         <root>src/test/java</root>
                     </roots>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.1.2</version>
+                <executions>
+                    <execution>
+                        <id>copy</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>com.walmartlabs.concord.runtime.v1</groupId>
+                                    <artifactId>concord-runtime-impl-v1</artifactId>
+                                    <version>${concord.version}</version>
+                                    <classifier>jar-with-dependencies</classifier>
+                                    <destFileName>runner-v1.jar</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

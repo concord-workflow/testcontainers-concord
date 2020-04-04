@@ -40,27 +40,62 @@ public class MyTest {
 This allows for easier debugging, i.e. it is possible to set up a breakpoint inside
 the Server's, the Agent's or the plugin's code while running tests.
 
-Requires additional Concord modules to be present in classpath: 
+Requires additional Maven configuration: 
 
 ```xml
-<dependencies>
-    <dependency>
-        <groupId>com.walmartlabs.concord.server</groupId>
-        <artifactId>concord-server-impl</artifactId>
-        <version>${concord.version}</version>
-        <scope>test</scope>
-    </dependency>
-    <dependency>
-        <groupId>com.walmartlabs.concord.server</groupId>
-        <artifactId>concord-server</artifactId>
-        <version>${concord.version}</version>
-        <scope>test</scope>
-    </dependency>
-    <dependency>
-        <groupId>com.walmartlabs.concord</groupId>
-        <artifactId>concord-agent</artifactId>
-        <version>${concord.version}</version>
-        <scope>test</scope>
-    </dependency>
-</dependencies>
+<project>
+    <dependencies>
+        <dependency>
+            <groupId>com.walmartlabs.concord.server</groupId>
+            <artifactId>concord-server-impl</artifactId>
+            <version>${concord.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.walmartlabs.concord.server</groupId>
+            <artifactId>concord-server</artifactId>
+            <version>${concord.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.walmartlabs.concord</groupId>
+            <artifactId>concord-agent</artifactId>
+            <version>${concord.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    
+    <build>
+        <plugins>
+            <!-- copy the runtime's JAR into the target directory -->    
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.1.2</version>
+                <executions>
+                    <execution>
+                        <id>copy</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>com.walmartlabs.concord.runtime.v1</groupId>
+                                    <artifactId>concord-runtime-impl-v1</artifactId>
+                                    <version>${concord.version}</version>
+                                    <classifier>jar-with-dependencies</classifier>
+                                    <destFileName>runner-v1.jar</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
 ```

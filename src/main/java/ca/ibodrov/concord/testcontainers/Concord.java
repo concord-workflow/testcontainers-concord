@@ -34,6 +34,7 @@ public class Concord implements TestRule {
     private boolean streamServerLogs;
     private boolean streamAgentLogs;
     private boolean localMode;
+    private String pathToRunnerV1 = "target/runner-v1.jar";
 
     private ConcordEnvironment environment;
 
@@ -139,6 +140,22 @@ public class Concord implements TestRule {
         return this;
     }
 
+    public String pathToRunnerV1() {
+        return pathToRunnerV1;
+    }
+
+    /**
+     * Path to the runner v1 JAR to use when {@link #localMode(boolean)}
+     * is enabled.
+     * <p/>
+     * Typically points to the runner JAR file copied by Maven into
+     * the target directory.
+     */
+    public Concord pathToRunnerV1(String pathToRunnerV1) {
+        this.pathToRunnerV1 = pathToRunnerV1;
+        return this;
+    }
+
     /**
      * Utilities to work with Concord processes.
      */
@@ -162,7 +179,7 @@ public class Concord implements TestRule {
 
     private ConcordEnvironment createEnvironment() {
         if (localMode) {
-            return new ConcordLocalEnvironment();
+            return new ConcordLocalEnvironment(this);
         }
 
         return new ConcordDockerEnvironment(this);
