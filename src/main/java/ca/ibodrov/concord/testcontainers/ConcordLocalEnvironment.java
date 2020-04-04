@@ -48,6 +48,7 @@ public class ConcordLocalEnvironment implements ConcordEnvironment {
     private final GenericContainer<?> db;
     private final String apiToken;
     private final String pathToRunnerV1;
+    private final boolean startAgent;
 
     private ConcordServer server;
     private Agent agent;
@@ -61,6 +62,8 @@ public class ConcordLocalEnvironment implements ConcordEnvironment {
         this.apiToken = randomToken();
 
         this.pathToRunnerV1 = opts.pathToRunnerV1();
+
+        this.startAgent = opts.startAgent();
     }
 
     @Override
@@ -90,22 +93,26 @@ public class ConcordLocalEnvironment implements ConcordEnvironment {
             throw new RuntimeException(e);
         }
 
-        try {
-            Injector injector = server.getInjector();
-            this.agent = injector.getInstance(Agent.class);
+        if (startAgent) {
+            try {
+                Injector injector = server.getInjector();
+                this.agent = injector.getInstance(Agent.class);
 
-            agent.start();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+                agent.start();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
     @Override
     public void stop() {
-        try {
-            this.agent.stop();
-        } catch (Exception e) {
-            log.warn("Error while stopping the Agent: {}", e.getMessage(), e);
+        if (this.agent != null) {
+            try {
+                this.agent.stop();
+            } catch (Exception e) {
+                log.warn("Error while stopping the Agent: {}", e.getMessage(), e);
+            }
         }
 
         try {

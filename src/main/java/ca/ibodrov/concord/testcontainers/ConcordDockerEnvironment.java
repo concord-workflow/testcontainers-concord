@@ -40,6 +40,8 @@ public class ConcordDockerEnvironment implements ConcordEnvironment {
     private final GenericContainer<?> server;
     private final GenericContainer<?> agent;
 
+    private final boolean startAgent;
+
     private String apiToken;
 
     public ConcordDockerEnvironment(Concord opts) {
@@ -92,6 +94,8 @@ public class ConcordDockerEnvironment implements ConcordEnvironment {
             Slf4jLogConsumer serverLogConsumer = new Slf4jLogConsumer(log);
             agent.followOutput(serverLogConsumer);
         }
+
+        this.startAgent = opts.startAgent();
     }
 
     @Override
@@ -122,7 +126,10 @@ public class ConcordDockerEnvironment implements ConcordEnvironment {
     public void start() {
         this.db.start();
         this.server.start();
-        this.agent.start();
+
+        if (startAgent) {
+            this.agent.start();
+        }
     }
 
     @Override

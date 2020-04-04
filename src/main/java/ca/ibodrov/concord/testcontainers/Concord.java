@@ -35,11 +35,19 @@ public class Concord implements TestRule {
     private boolean streamAgentLogs;
     private boolean localMode;
     private String pathToRunnerV1 = "target/runner-v1.jar";
+    private boolean startAgent = true;
 
     private ConcordEnvironment environment;
 
     /**
-     * Return the server API prefix, e.g. http://localhost:8001
+     * Returns the server's API port, e.g. 8001.
+     */
+    public int apiPort() {
+        return environment.apiPort();
+    }
+
+    /**
+     * Returns the server API prefix, e.g. http://localhost:8001
      */
     public String apiUrlPrefix() {
         return "http://localhost:" + environment.apiPort();
@@ -153,6 +161,18 @@ public class Concord implements TestRule {
      */
     public Concord pathToRunnerV1(String pathToRunnerV1) {
         this.pathToRunnerV1 = pathToRunnerV1;
+        return this;
+    }
+
+    public boolean startAgent() {
+        return startAgent;
+    }
+
+    /**
+     * Don't start the Agent if {@code false}. Default is {@code true}.
+     */
+    public Concord startAgent(boolean startAgent) {
+        this.startAgent = startAgent;
         return this;
     }
 
