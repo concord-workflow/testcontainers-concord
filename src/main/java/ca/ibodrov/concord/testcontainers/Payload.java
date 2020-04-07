@@ -21,12 +21,12 @@ package ca.ibodrov.concord.testcontainers;
  */
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class Payload {
 
-    private final Map<String, Object> input = new HashMap<>();
-    private final Map<String, Object> arguments = new HashMap<>();
+    private final Map<String, Object> input = new LinkedHashMap<>();
 
     /**
      * Sets the content of the main concord.yml file.
@@ -38,6 +38,16 @@ public final class Payload {
 
     public Payload parameter(String key, Object value) {
         input.put(key, value);
+        return this;
+    }
+
+    public Payload archive(byte[] archive) {
+        input.put("archive", archive);
+        return this;
+    }
+
+    public Payload arg(String name, Object value) {
+        input.put("arguments." + name, value);
         return this;
     }
 

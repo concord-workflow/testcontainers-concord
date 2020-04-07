@@ -24,9 +24,8 @@ import com.google.gson.reflect.TypeToken;
 import com.squareup.okhttp.Call;
 import com.walmartlabs.concord.ApiClient;
 import com.walmartlabs.concord.ApiException;
-import com.walmartlabs.concord.client.ProcessEntry;
+import com.walmartlabs.concord.client.*;
 import com.walmartlabs.concord.client.ProcessEntry.StatusEnum;
-import com.walmartlabs.concord.client.ProcessV2Api;
 import org.intellij.lang.annotations.Language;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -114,6 +113,17 @@ public final class ConcordProcess {
         byte[] ab = getLog();
         String msg = "Expected: " + pattern + "\nGot: " + new String(ab);
         assertEquals(msg, 1, grep(pattern, ab).size());
+    }
+
+    public List<FormListEntry> forms() throws ApiException {
+        ProcessFormsApi formsApi = new ProcessFormsApi(client);
+
+        return formsApi.list(instanceId);
+    }
+
+    public FormSubmitResponse form(String formName, Map<String, Object> data) throws ApiException {
+        ProcessFormsApi formsApi = new ProcessFormsApi(client);
+        return formsApi.submit(instanceId, formName, data);
     }
 
     private byte[] getLog() throws ApiException {
