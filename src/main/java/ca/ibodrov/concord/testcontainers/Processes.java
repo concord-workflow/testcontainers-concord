@@ -24,9 +24,14 @@ import com.walmartlabs.concord.ApiClient;
 import com.walmartlabs.concord.ApiException;
 import com.walmartlabs.concord.ApiResponse;
 import com.walmartlabs.concord.client.ClientUtils;
+import com.walmartlabs.concord.client.ProcessEntry;
+import com.walmartlabs.concord.client.ProcessV2Api;
 import com.walmartlabs.concord.client.StartProcessResponse;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public final class Processes {
 
@@ -50,6 +55,16 @@ public final class Processes {
         }
 
         return new ConcordProcess(client, resp.getData().getInstanceId());
+    }
+
+    /**
+     * List processes.
+     */
+    public List<ProcessEntry> list(ProcessListParams params) throws ApiException {
+        ProcessV2Api processApi = new ProcessV2Api(client);
+        return processApi.list(null, null, params.projectId(), null, null,
+                null, null, null, params.tags(), null,
+                null, null, null, params.limit(), params.offset());
     }
 
     /**

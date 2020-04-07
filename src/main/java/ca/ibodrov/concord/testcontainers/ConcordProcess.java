@@ -29,6 +29,7 @@ import com.walmartlabs.concord.client.ProcessEntry.StatusEnum;
 import org.intellij.lang.annotations.Language;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.plugin.javascript.navig.Array;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -37,7 +38,9 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.util.*;
 
+import static com.walmartlabs.concord.common.IOUtils.grep;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public final class ConcordProcess {
 
@@ -135,6 +138,11 @@ public final class ConcordProcess {
         assertEquals(msg, 0, grep(pattern, ab).size());
     }
 
+    public void assertLogAtLeast(@Language("RegExp") String pattern, int times) throws ApiException {
+        byte[] ab = getLog();
+        assertTrue(times <= grep(pattern, ab).size());
+    }
+
     /**
      * Returns a list of forms in the current process waiting for user input.
      */
@@ -160,6 +168,20 @@ public final class ConcordProcess {
 
         ProcessV2Api processV2Api = new ProcessV2Api(client);
         return processV2Api.get(instanceId, null);
+    }
+
+    public void killCascade() throws ApiException {
+        ProcessApi processApi = new ProcessApi(client);
+        processApi.killCascade(instanceId);
+    }
+
+    public List<ProcessEntry> subprocesses() throws ApiException {
+        return subprocesses((String[]) null);
+    }
+
+    public List<ProcessEntry> subprocesses(String ... tags) throws ApiException {
+        ProcessApi processApi = new ProcessApi(client);
+        return processApi.listSubprocesses(instanceId, tags == null ? null : Arrays.asList(tags));
     }
 
     private byte[] getLog() throws ApiException {

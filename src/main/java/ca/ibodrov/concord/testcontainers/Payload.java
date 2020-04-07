@@ -22,6 +22,7 @@ package ca.ibodrov.concord.testcontainers;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public final class Payload {
 
@@ -62,6 +63,11 @@ public final class Payload {
 
     public Payload file(String name, byte[] content) {
         input.put(name, content);
+        return this;
+    }
+
+    public Payload parent(UUID parentInstanceId) {
+        input.put("parentInstanceId", parentInstanceId.toString());
         return this;
     }
 
