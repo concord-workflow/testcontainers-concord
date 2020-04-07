@@ -117,7 +117,6 @@ public final class ConcordProcess {
 
     public List<FormListEntry> forms() throws ApiException {
         ProcessFormsApi formsApi = new ProcessFormsApi(client);
-
         return formsApi.list(instanceId);
     }
 
