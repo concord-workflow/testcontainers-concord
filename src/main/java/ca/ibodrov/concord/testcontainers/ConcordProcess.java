@@ -120,7 +120,7 @@ public final class ConcordProcess {
         return formsApi.list(instanceId);
     }
 
-    public FormSubmitResponse form(String formName, Map<String, Object> data) throws ApiException {
+    public FormSubmitResponse submitForm(String formName, Map<String, Object> data) throws ApiException {
         ProcessFormsApi formsApi = new ProcessFormsApi(client);
         return formsApi.submit(instanceId, formName, data);
     }
