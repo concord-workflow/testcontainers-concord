@@ -51,6 +51,9 @@ public final class ConcordProcess {
         this.instanceId = instanceId;
     }
 
+    /**
+     * Returns the process' ID.
+     */
     public UUID instanceId() {
         return instanceId;
     }
@@ -109,17 +112,26 @@ public final class ConcordProcess {
         }
     }
 
+    /**
+     * Asserts a pattern in the process' log.
+     */
     public void assertLog(@Language("RegExp") String pattern) throws ApiException {
         byte[] ab = getLog();
         String msg = "Expected: " + pattern + "\nGot: " + new String(ab);
         assertEquals(msg, 1, grep(pattern, ab).size());
     }
 
+    /**
+     * Returns a list of forms in the current process waiting for user input.
+     */
     public List<FormListEntry> forms() throws ApiException {
         ProcessFormsApi formsApi = new ProcessFormsApi(client);
         return formsApi.list(instanceId);
     }
 
+    /**
+     * Submits a form.
+     */
     public FormSubmitResponse submitForm(String formName, Map<String, Object> data) throws ApiException {
         ProcessFormsApi formsApi = new ProcessFormsApi(client);
         return formsApi.submit(instanceId, formName, data);
