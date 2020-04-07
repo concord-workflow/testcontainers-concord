@@ -58,6 +58,11 @@ public final class ConcordProcess {
         return instanceId;
     }
 
+    public ProcessEntry getEntry(String ... includes) throws ApiException {
+        ProcessV2Api api = new ProcessV2Api(client);
+        return api.get(instanceId, Arrays.asList(includes));
+    }
+
     /**
      * Waits for the process to reach the specified status. Throws an exception if
      * the process ends up in an unexpected status.
@@ -122,6 +127,15 @@ public final class ConcordProcess {
     }
 
     /**
+     * Asserts a no pattern in the process' log.
+     */
+    public void assertNoLog(@Language("RegExp") String pattern) throws ApiException {
+        byte[] ab = getLog();
+        String msg = "Expected: " + pattern + "\nGot: " + new String(ab);
+        assertEquals(msg, 0, grep(pattern, ab).size());
+    }
+
+    /**
      * Returns a list of forms in the current process waiting for user input.
      */
     public List<FormListEntry> forms() throws ApiException {
@@ -135,6 +149,17 @@ public final class ConcordProcess {
     public FormSubmitResponse submitForm(String formName, Map<String, Object> data) throws ApiException {
         ProcessFormsApi formsApi = new ProcessFormsApi(client);
         return formsApi.submit(instanceId, formName, data);
+    }
+
+    /**
+     * Disable process.
+     */
+    public ProcessEntry disable() throws ApiException {
+        ProcessApi processApi = new ProcessApi(client);
+        processApi.disable(instanceId, true);
+
+        ProcessV2Api processV2Api = new ProcessV2Api(client);
+        return processV2Api.get(instanceId, null);
     }
 
     private byte[] getLog() throws ApiException {

@@ -45,8 +45,23 @@ public final class Payload {
         return this;
     }
 
+    public Payload entryPoint(String entryPoint) {
+        input.put("entryPoint", entryPoint);
+        return this;
+    }
+
+    public Payload activeProfiles(String profiles) {
+        input.put("activeProfiles", profiles);
+        return this;
+    }
+
     public Payload arg(String name, Object value) {
         input.put("arguments." + name, value);
+        return this;
+    }
+
+    public Payload file(String name, byte[] content) {
+        input.put(name, content);
         return this;
     }
 
