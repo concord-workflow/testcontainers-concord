@@ -29,7 +29,6 @@ import com.walmartlabs.concord.client.ProcessEntry.StatusEnum;
 import org.intellij.lang.annotations.Language;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.plugin.javascript.navig.Array;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -38,7 +37,6 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.util.*;
 
-import static com.walmartlabs.concord.common.IOUtils.grep;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -90,34 +88,12 @@ public final class ConcordProcess {
     public ProcessEntry waitForStatus(StatusEnum status, StatusEnum... more) throws ApiException {
         ProcessV2Api api = new ProcessV2Api(client);
 
-        int retries = 10;
+        return waitForStatus(() -> Collections.singletonList(api.get(instanceId, Collections.emptyList())), status, more);
+    }
 
-        ProcessEntry pe;
-        while (true) {
-            try {
-                pe = api.get(instanceId, Collections.emptyList());
-                if (pe.getStatus() == StatusEnum.FINISHED || pe.getStatus() == StatusEnum.FAILED || pe.getStatus() == StatusEnum.CANCELLED) {
-                    return pe;
-                }
-
-                if (isSame(pe.getStatus(), status, more)) {
-                    return pe;
-                }
-            } catch (ApiException e) {
-                if (e.getCode() == 404) {
-                    log.warn("waitForStatus ['{}'] -> process not found, retrying... ({})", instanceId, retries);
-                    if (--retries < 0) {
-                        throw e;
-                    }
-                }
-            }
-
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
+    public ProcessEntry waitForChildStatus(StatusEnum status, StatusEnum... more) throws ApiException {
+        ProcessApi api = new ProcessApi(client);
+        return waitForStatus(() -> api.listSubprocesses(instanceId, null), status, more);
     }
 
     /**
@@ -225,5 +201,42 @@ public final class ConcordProcess {
             throw new RuntimeException(e);
         }
         return result;
+    }
+
+    private static ProcessEntry waitForStatus(ProcessSupplier processSupplier, StatusEnum status, StatusEnum... more) throws ApiException {
+        int retries = 10;
+
+        while (true) {
+            try {
+                List<ProcessEntry> processes = processSupplier.get();
+                for (ProcessEntry pe : processes) {
+                    if (pe.getStatus() == StatusEnum.FINISHED || pe.getStatus() == StatusEnum.FAILED || pe.getStatus() == StatusEnum.CANCELLED) {
+                        return pe;
+                    }
+
+                    if (isSame(pe.getStatus(), status, more)) {
+                        return pe;
+                    }
+                }
+            } catch (ApiException e) {
+                if (e.getCode() == 404) {
+                    log.warn("waitForStatus -> process not found, retrying... ({})", retries);
+                    if (--retries < 0) {
+                        throw e;
+                    }
+                }
+            }
+
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+
+    private interface ProcessSupplier {
+
+        List<ProcessEntry> get() throws ApiException;
     }
 }

@@ -71,6 +71,16 @@ public final class Payload {
         return this;
     }
 
+    public Payload org(String orgName) {
+        input.put("org", orgName);
+        return this;
+    }
+
+    public Payload project(String projectName) {
+        input.put("project", projectName);
+        return this;
+    }
+
     Map<String, Object> getInput() {
         return input;
     }
