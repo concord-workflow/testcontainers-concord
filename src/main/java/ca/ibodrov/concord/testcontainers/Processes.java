@@ -9,9 +9,9 @@ package ca.ibodrov.concord.testcontainers;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,13 +24,20 @@ import com.walmartlabs.concord.ApiClient;
 import com.walmartlabs.concord.ApiException;
 import com.walmartlabs.concord.ApiResponse;
 import com.walmartlabs.concord.client.ClientUtils;
+import com.walmartlabs.concord.client.ProcessEntry;
+import com.walmartlabs.concord.client.ProcessV2Api;
 import com.walmartlabs.concord.client.StartProcessResponse;
 
+import java.util.List;
 import java.util.Map;
 
 public final class Processes {
 
     private final ApiClient client;
+
+    Processes(ApiClient client) {
+        this.client = client;
+    }
 
     /**
      * Starts a new Concord process using the provided data as the request parameters.
@@ -61,7 +68,13 @@ public final class Processes {
         return start(builder.getInput());
     }
 
-    Processes(ApiClient client) {
-        this.client = client;
+    /**
+     * List processes.
+     */
+    public List<ProcessEntry> list(ProcessListQuery query) throws ApiException {
+        ProcessV2Api processApi = new ProcessV2Api(client);
+        return processApi.list(null, null, query.projectId(), null, null,
+                null, null, null, query.tags(), null,
+                null, null, null, query.limit(), query.offset());
     }
 }

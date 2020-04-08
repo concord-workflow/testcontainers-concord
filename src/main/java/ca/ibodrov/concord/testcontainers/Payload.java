@@ -22,6 +22,7 @@ package ca.ibodrov.concord.testcontainers;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public final class Payload {
 
@@ -45,8 +46,38 @@ public final class Payload {
         return this;
     }
 
+    public Payload entryPoint(String entryPoint) {
+        input.put("entryPoint", entryPoint);
+        return this;
+    }
+
+    public Payload activeProfiles(String profiles) {
+        input.put("activeProfiles", profiles);
+        return this;
+    }
+
     public Payload arg(String name, Object value) {
         input.put("arguments." + name, value);
+        return this;
+    }
+
+    public Payload file(String name, byte[] content) {
+        input.put(name, content);
+        return this;
+    }
+
+    public Payload parent(UUID parentInstanceId) {
+        input.put("parentInstanceId", parentInstanceId.toString());
+        return this;
+    }
+
+    public Payload org(String orgName) {
+        input.put("org", orgName);
+        return this;
+    }
+
+    public Payload project(String projectName) {
+        input.put("project", projectName);
         return this;
     }
 

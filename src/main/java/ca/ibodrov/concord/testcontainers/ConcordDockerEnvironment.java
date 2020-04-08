@@ -80,7 +80,7 @@ public class ConcordDockerEnvironment implements ConcordEnvironment {
 
         if (opts.streamServerLogs()) {
             Slf4jLogConsumer serverLogConsumer = new Slf4jLogConsumer(log);
-            server.followOutput(serverLogConsumer);
+            server.withLogConsumer(serverLogConsumer);
         }
 
         this.agent = new GenericContainer<>("walmartlabs/concord-agent:" + opts.version())
@@ -92,7 +92,7 @@ public class ConcordDockerEnvironment implements ConcordEnvironment {
 
         if (opts.streamAgentLogs()) {
             Slf4jLogConsumer serverLogConsumer = new Slf4jLogConsumer(log);
-            agent.followOutput(serverLogConsumer);
+            agent.withLogConsumer(serverLogConsumer);
         }
 
         this.startAgent = opts.startAgent();

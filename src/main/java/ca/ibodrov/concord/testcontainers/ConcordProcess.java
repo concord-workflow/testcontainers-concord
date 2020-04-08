@@ -38,6 +38,7 @@ import java.lang.reflect.Type;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public final class ConcordProcess {
 
@@ -56,6 +57,11 @@ public final class ConcordProcess {
      */
     public UUID instanceId() {
         return instanceId;
+    }
+
+    public ProcessEntry getEntry(String ... includes) throws ApiException {
+        ProcessV2Api api = new ProcessV2Api(client);
+        return api.get(instanceId, Arrays.asList(includes));
     }
 
     /**
@@ -82,34 +88,17 @@ public final class ConcordProcess {
     public ProcessEntry waitForStatus(StatusEnum status, StatusEnum... more) throws ApiException {
         ProcessV2Api api = new ProcessV2Api(client);
 
-        int retries = 10;
+        return waitForStatus(() -> Collections.singletonList(api.get(instanceId, Collections.emptyList())), status, more);
+    }
 
-        ProcessEntry pe;
-        while (true) {
-            try {
-                pe = api.get(instanceId, Collections.emptyList());
-                if (pe.getStatus() == StatusEnum.FINISHED || pe.getStatus() == StatusEnum.FAILED || pe.getStatus() == StatusEnum.CANCELLED) {
-                    return pe;
-                }
-
-                if (isSame(pe.getStatus(), status, more)) {
-                    return pe;
-                }
-            } catch (ApiException e) {
-                if (e.getCode() == 404) {
-                    log.warn("waitForStatus ['{}'] -> process not found, retrying... ({})", instanceId, retries);
-                    if (--retries < 0) {
-                        throw e;
-                    }
-                }
-            }
-
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
+    /**
+     * Waits for the child process to reach the specified or one of the final statuses.
+     *
+     * @return the process queue entry for the child process.
+     */
+    public ProcessEntry waitForChildStatus(StatusEnum status, StatusEnum... more) throws ApiException {
+        ProcessApi api = new ProcessApi(client);
+        return waitForStatus(() -> api.listSubprocesses(instanceId, null), status, more);
     }
 
     /**
@@ -119,6 +108,20 @@ public final class ConcordProcess {
         byte[] ab = getLog();
         String msg = "Expected: " + pattern + "\nGot: " + new String(ab);
         assertEquals(msg, 1, grep(pattern, ab).size());
+    }
+
+    /**
+     * Asserts a no pattern in the process' log.
+     */
+    public void assertNoLog(@Language("RegExp") String pattern) throws ApiException {
+        byte[] ab = getLog();
+        String msg = "Expected: " + pattern + "\nGot: " + new String(ab);
+        assertEquals(msg, 0, grep(pattern, ab).size());
+    }
+
+    public void assertLogAtLeast(@Language("RegExp") String pattern, int times) throws ApiException {
+        byte[] ab = getLog();
+        assertTrue(times <= grep(pattern, ab).size());
     }
 
     /**
@@ -135,6 +138,31 @@ public final class ConcordProcess {
     public FormSubmitResponse submitForm(String formName, Map<String, Object> data) throws ApiException {
         ProcessFormsApi formsApi = new ProcessFormsApi(client);
         return formsApi.submit(instanceId, formName, data);
+    }
+
+    /**
+     * Disable process.
+     */
+    public ProcessEntry disable() throws ApiException {
+        ProcessApi processApi = new ProcessApi(client);
+        processApi.disable(instanceId, true);
+
+        ProcessV2Api processV2Api = new ProcessV2Api(client);
+        return processV2Api.get(instanceId, null);
+    }
+
+    public void killCascade() throws ApiException {
+        ProcessApi processApi = new ProcessApi(client);
+        processApi.killCascade(instanceId);
+    }
+
+    public List<ProcessEntry> subprocesses() throws ApiException {
+        return subprocesses((String[]) null);
+    }
+
+    public List<ProcessEntry> subprocesses(String ... tags) throws ApiException {
+        ProcessApi processApi = new ProcessApi(client);
+        return processApi.listSubprocesses(instanceId, tags == null ? null : Arrays.asList(tags));
     }
 
     private byte[] getLog() throws ApiException {
@@ -178,5 +206,42 @@ public final class ConcordProcess {
             throw new RuntimeException(e);
         }
         return result;
+    }
+
+    private static ProcessEntry waitForStatus(ProcessSupplier processSupplier, StatusEnum status, StatusEnum... more) throws ApiException {
+        int retries = 10;
+
+        while (true) {
+            try {
+                List<ProcessEntry> processes = processSupplier.get();
+                for (ProcessEntry pe : processes) {
+                    if (pe.getStatus() == StatusEnum.FINISHED || pe.getStatus() == StatusEnum.FAILED || pe.getStatus() == StatusEnum.CANCELLED) {
+                        return pe;
+                    }
+
+                    if (isSame(pe.getStatus(), status, more)) {
+                        return pe;
+                    }
+                }
+            } catch (ApiException e) {
+                if (e.getCode() == 404) {
+                    log.warn("waitForStatus -> process not found, retrying... ({})", retries);
+                    if (--retries < 0) {
+                        throw e;
+                    }
+                }
+            }
+
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+
+    private interface ProcessSupplier {
+
+        List<ProcessEntry> get() throws ApiException;
     }
 }

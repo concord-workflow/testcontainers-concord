@@ -95,6 +95,23 @@
             <artifactId>guice</artifactId>
         </dependency>
 
+        <!-- immutables -->
+        <dependency>
+            <groupId>org.immutables</groupId>
+            <artifactId>value</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.errorprone</groupId>
+            <artifactId>error_prone_annotations</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- local mode support -->
         <dependency>
             <groupId>com.walmartlabs.concord.server</groupId>
@@ -127,6 +144,9 @@
                 <artifactId>takari-lifecycle-plugin</artifactId>
                 <version>1.13.9</version>
                 <extensions>true</extensions>
+                <configuration>
+                    <proc>proc</proc>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
