@@ -48,6 +48,7 @@ public class ConcordLocalEnvironment implements ConcordEnvironment {
     private final GenericContainer<?> db;
     private final String apiToken;
     private final String pathToRunnerV1;
+    private final String pathToRunnerV2;
     private final boolean startAgent;
 
     private ConcordServer server;
@@ -62,6 +63,7 @@ public class ConcordLocalEnvironment implements ConcordEnvironment {
         this.apiToken = randomToken();
 
         this.pathToRunnerV1 = opts.pathToRunnerV1();
+        this.pathToRunnerV2 = opts.pathToRunnerV2();
 
         this.startAgent = opts.startAgent();
     }
@@ -78,7 +80,13 @@ public class ConcordLocalEnvironment implements ConcordEnvironment {
 
     @Override
     public void start() {
-        assertRunnerJar(pathToRunnerV1);
+        if (pathToRunnerV1 != null) {
+            assertRunnerJar(pathToRunnerV1);
+        }
+
+        if (pathToRunnerV2 != null) {
+            assertRunnerJar(pathToRunnerV2);
+        }
 
         this.db.start();
 
@@ -130,7 +138,12 @@ public class ConcordLocalEnvironment implements ConcordEnvironment {
         String s = Resources.toString(ConcordLocalEnvironment.class.getResource("local/concord.conf"), Charsets.UTF_8);
         s = s.replaceAll("DB_URL", "jdbc:postgresql://localhost:" + db.getFirstMappedPort() + "/postgres");
         s = s.replaceAll("API_TOKEN", apiToken);
-        s = s.replaceAll("RUNNER_V1_PATH", pathToRunnerV1);
+        if (pathToRunnerV1 != null) {
+            s = s.replaceAll("RUNNER_V1_PATH", pathToRunnerV1);
+        }
+        if (pathToRunnerV2 != null) {
+            s = s.replaceAll("RUNNER_V2_PATH", pathToRunnerV2);
+        }
         Files.write(dst, s.getBytes(), StandardOpenOption.TRUNCATE_EXISTING);
 
         return dst;

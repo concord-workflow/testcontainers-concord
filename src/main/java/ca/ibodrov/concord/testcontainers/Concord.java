@@ -35,6 +35,7 @@ public class Concord implements TestRule {
     private boolean streamAgentLogs;
     private boolean localMode;
     private String pathToRunnerV1 = "target/runner-v1.jar";
+    private String pathToRunnerV2;
     private boolean startAgent = true;
 
     private ConcordEnvironment environment;
@@ -152,6 +153,10 @@ public class Concord implements TestRule {
         return pathToRunnerV1;
     }
 
+    public String pathToRunnerV2() {
+        return pathToRunnerV2;
+    }
+
     /**
      * Path to the runner v1 JAR to use when {@link #localMode(boolean)}
      * is enabled.
@@ -161,6 +166,18 @@ public class Concord implements TestRule {
      */
     public Concord pathToRunnerV1(String pathToRunnerV1) {
         this.pathToRunnerV1 = pathToRunnerV1;
+        return this;
+    }
+
+    /**
+     * Path to the runner v2 JAR to use when {@link #localMode(boolean)}
+     * is enabled.
+     * <p/>
+     * Typically points to the runner JAR file copied by Maven into
+     * the target directory.
+     */
+    public Concord pathToRunnerV2(String pathToRunnerV2) {
+        this.pathToRunnerV2 = pathToRunnerV2;
         return this;
     }
 
