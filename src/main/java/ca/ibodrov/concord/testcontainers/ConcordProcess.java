@@ -91,6 +91,11 @@ public final class ConcordProcess {
         return waitForStatus(() -> Collections.singletonList(api.get(instanceId, Collections.emptyList())), status, more);
     }
 
+    /**
+     * Waits for the child process to reach the specified or one of the final statuses.
+     *
+     * @return the process queue entry for the child process.
+     */
     public ProcessEntry waitForChildStatus(StatusEnum status, StatusEnum... more) throws ApiException {
         ProcessApi api = new ProcessApi(client);
         return waitForStatus(() -> api.listSubprocesses(instanceId, null), status, more);
