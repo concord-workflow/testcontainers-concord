@@ -20,44 +20,34 @@ package ca.ibodrov.concord.testcontainers;
  * =====
  */
 
+import org.immutables.value.Value;
+
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-public class ProcessListParams {
+@Value.Immutable
+public interface ProcessListQuery {
 
-    private UUID projectId;
+    @Nullable
+    UUID projectId();
 
-    private List<String> tags = new ArrayList<>();
+    @Nullable
+    List<String> tags();
 
-    private int limit = 1;
-
-    private int offset = 0;
-
-    public ProcessListParams projectId(UUID projectId) {
-        this.projectId = projectId;
-        return this;
+    @Value.Default
+    default int limit() {
+        return 1;
     }
 
-    public UUID projectId() {
-        return projectId;
+    @Value.Default
+    default int offset() {
+        return 0;
     }
 
-    public ProcessListParams tags(String ... tags) {
-        this.tags.addAll(Arrays.asList(tags));
-        return this;
-    }
-
-    public List<String> tags() {
-        return tags;
-    }
-
-    public int limit() {
-        return limit;
-    }
-
-    public int offset() {
-        return offset;
+    static ImmutableProcessListQuery.Builder builder() {
+        return ImmutableProcessListQuery.builder();
     }
 }

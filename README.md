@@ -99,3 +99,41 @@ Requires additional Maven configuration:
     </build>
 </project>
 ```
+
+Runtime V2 requires a different artifact:
+```xml
+<project>
+    <build>
+        <plugins>
+            <!-- copy the runtime's JAR into the target directory -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.1.2</version>
+                <executions>
+                    <execution>
+                        <id>copy-runner-jar</id>
+                        <phase>process-test-resources</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>com.walmartlabs.concord.runtime.v2</groupId>
+                                    <artifactId>concord-runner-v2</artifactId>
+                                    <version>${concord.version}</version>
+                                    <classifier>jar-with-dependencies</classifier>
+                                    <destFileName>runner-v2.jar</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
