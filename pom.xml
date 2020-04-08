@@ -12,7 +12,7 @@
 
     <groupId>ca.ibodrov.concord</groupId>
     <artifactId>testcontainers-concord</artifactId>
-    <version>0.0.3-SNAPSHOT</version>
+    <version>0.0.3</version>
     <packaging>takari-jar</packaging>
 
     <name>testcontainers-concord</name>
@@ -208,6 +208,6 @@
 
     <scm>
         <developerConnection>scm:git:git@github.com:concord-workflow/testcontainers-concord.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>testcontainers-concord-0.0.3</tag>
     </scm>
 </project>
