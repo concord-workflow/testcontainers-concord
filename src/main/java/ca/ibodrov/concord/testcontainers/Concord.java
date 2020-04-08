@@ -35,7 +35,7 @@ public class Concord implements TestRule {
     private boolean streamAgentLogs;
     private boolean localMode;
     private String pathToRunnerV1 = "target/runner-v1.jar";
-    private String pathToRunnerV2 = "target/runner-v2.jar";
+    private String pathToRunnerV2;
     private boolean startAgent = true;
 
     private ConcordEnvironment environment;

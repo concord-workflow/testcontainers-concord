@@ -123,13 +123,17 @@ public class ConcordLocalEnvironment implements ConcordEnvironment {
             }
         }
 
-        try {
-            this.server.stop();
-        } catch (Exception e) {
-            log.warn("Error while stopping the Server: {}", e.getMessage(), e);
+        if (this.server != null) {
+            try {
+                this.server.stop();
+            } catch (Exception e) {
+                log.warn("Error while stopping the Server: {}", e.getMessage(), e);
+            }
         }
 
-        this.db.stop();
+        if (this.db != null) {
+            this.db.stop();
+        }
     }
 
     private Path prepareConfigurationFile() throws IOException {
