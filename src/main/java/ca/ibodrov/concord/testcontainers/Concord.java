@@ -25,6 +25,8 @@ import com.walmartlabs.concord.client.ConcordApiClient;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
+import org.testcontainers.images.ImagePullPolicy;
+import org.testcontainers.images.PullPolicy;
 
 public class Concord implements TestRule {
 
@@ -39,6 +41,7 @@ public class Concord implements TestRule {
     private String pathToRunnerV1 = "target/runner-v1.jar";
     private String pathToRunnerV2;
     private boolean startAgent = true;
+    private ImagePullPolicy pullPolicy;
 
     private ConcordEnvironment environment;
 
@@ -216,6 +219,19 @@ public class Concord implements TestRule {
      */
     public Concord startAgent(boolean startAgent) {
         this.startAgent = startAgent;
+        return this;
+    }
+
+    /**
+     * Docker image pull policy. If {@link #version()} is "latest"
+     * {@link PullPolicy#alwaysPull()} is used by default.
+     */
+    public ImagePullPolicy pullPolicy() {
+        return pullPolicy;
+    }
+
+    public Concord pullPolicy(ImagePullPolicy pullPolicy) {
+        this.pullPolicy = pullPolicy;
         return this;
     }
 

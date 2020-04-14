@@ -139,11 +139,17 @@ public class ConcordDockerEnvironment implements ConcordEnvironment {
     }
 
     private static ImagePullPolicy pullPolicy(Concord opts) {
-        if ("latest".equals(opts.version())) {
-            return PullPolicy.alwaysPull();
+        ImagePullPolicy p = opts.pullPolicy();
+
+        if (p == null){
+            if ("latest".equals(opts.version())) {
+                return PullPolicy.alwaysPull();
+            } else {
+                return PullPolicy.defaultPolicy();
+            }
         }
 
-        return PullPolicy.defaultPolicy();
+        return p;
     }
 
     private static String getApiToken(String s) {
