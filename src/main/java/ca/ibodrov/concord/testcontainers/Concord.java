@@ -29,6 +29,8 @@ import org.junit.runners.model.Statement;
 public class Concord implements TestRule {
 
     private String version = "latest";
+    private String serverImage = "walmartlabs/concord-server";
+    private String agentImage = "walmartlabs/concord-agent";
     private String serverExtDirectory;
     private String serverClassesDirectory;
     private boolean streamServerLogs;
@@ -80,6 +82,30 @@ public class Concord implements TestRule {
      */
     public Concord version(String version) {
         this.version = version;
+        return this;
+    }
+
+    public String serverImage() {
+        return serverImage;
+    }
+
+    /**
+     * Server docker image name without version.
+     */
+    public Concord serverImage(String image) {
+        this.serverImage = image;
+        return this;
+    }
+
+    public String agentImage() {
+        return agentImage;
+    }
+
+    /**
+     * Agent docker image name without version.
+     */
+    public Concord agentImage(String image) {
+        this.agentImage = image;
         return this;
     }
 

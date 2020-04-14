@@ -35,7 +35,6 @@ public class ConcordDockerEnvironment implements ConcordEnvironment {
 
     private static final Logger log = LoggerFactory.getLogger(ConcordDockerEnvironment.class);
 
-    private final Network network;
     private final GenericContainer<?> db;
     private final GenericContainer<?> server;
     private final GenericContainer<?> agent;
@@ -47,7 +46,7 @@ public class ConcordDockerEnvironment implements ConcordEnvironment {
     public ConcordDockerEnvironment(Concord opts) {
         ImagePullPolicy pullPolicy = pullPolicy(opts);
 
-        this.network = Network.newNetwork();
+        Network network = Network.newNetwork();
 
         this.db = new GenericContainer<>("library/postgres:10")
                 .withEnv("POSTGRES_PASSWORD", "q1")
@@ -55,7 +54,7 @@ public class ConcordDockerEnvironment implements ConcordEnvironment {
                 .withNetwork(network);
 
         String version = opts.version();
-        this.server = new GenericContainer<>("walmartlabs/concord-server:" + version)
+        this.server = new GenericContainer<>(opts.serverImage() + ":" + version)
                 .dependsOn(db)
                 .withImagePullPolicy(pullPolicy)
                 .withEnv("DB_URL", "jdbc:postgresql://db:5432/postgres")
@@ -83,7 +82,7 @@ public class ConcordDockerEnvironment implements ConcordEnvironment {
             server.withLogConsumer(serverLogConsumer);
         }
 
-        this.agent = new GenericContainer<>("walmartlabs/concord-agent:" + opts.version())
+        this.agent = new GenericContainer<>(opts.agentImage() + ":" + opts.version())
                 .dependsOn(server)
                 .withImagePullPolicy(pullPolicy)
                 .withNetwork(network)
