@@ -28,6 +28,8 @@ import org.junit.runners.model.Statement;
 import org.testcontainers.images.ImagePullPolicy;
 import org.testcontainers.images.PullPolicy;
 
+import java.util.Map;
+
 public class Concord implements TestRule {
 
     private String version = "latest";
@@ -35,6 +37,8 @@ public class Concord implements TestRule {
     private String agentImage = "walmartlabs/concord-agent";
     private String serverExtDirectory;
     private String serverClassesDirectory;
+    private String mavenConfigurationPath;
+    private boolean useLocalMavenRepository;
     private boolean streamServerLogs;
     private boolean streamAgentLogs;
     private boolean localMode;
@@ -136,6 +140,34 @@ public class Concord implements TestRule {
      */
     public Concord serverClassesDirectory(String serverClassesDirectory) {
         this.serverClassesDirectory = serverClassesDirectory;
+        return this;
+    }
+
+    public String mavenConfigurationPath() {
+        return mavenConfigurationPath;
+    }
+
+    /**
+     * Path to {@code mvn.json} to use with the server and agent containers.
+     * Doesn't work with {@link #localMode}.
+     */
+    public Concord mavenConfigurationPath(String mavenConfigurationPath) {
+        this.mavenConfigurationPath = mavenConfigurationPath;
+        return this;
+    }
+
+    public boolean useLocalMavenRepository() {
+        return this.useLocalMavenRepository;
+    }
+
+    /**
+     * If {@code true} the the local maven repository {@code $HOME/.m2/repository}
+     * will be mounted into the server and agent containers.
+     * Doesn't work with {@link #localMode}.
+     * Exclusive with {@link #mavenConfigurationPath}
+     */
+    public Concord useLocalMavenRepository(boolean useLocalMavenRepository) {
+        this.useLocalMavenRepository = useLocalMavenRepository;
         return this;
     }
 
