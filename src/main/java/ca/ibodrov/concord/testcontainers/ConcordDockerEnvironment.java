@@ -9,9 +9,9 @@ package ca.ibodrov.concord.testcontainers;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,6 +30,10 @@ import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.ImagePullPolicy;
 import org.testcontainers.images.PullPolicy;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class ConcordDockerEnvironment implements ConcordEnvironment {
 
@@ -94,6 +98,25 @@ public class ConcordDockerEnvironment implements ConcordEnvironment {
             agent.withLogConsumer(serverLogConsumer);
         }
 
+        String mavenConfigurationPath = opts.mavenConfigurationPath();
+        if (mavenConfigurationPath != null) {
+            server.withEnv("CONCORD_MAVEN_CFG", "/opt/concord/conf/mvn.json")
+                    .withFileSystemBind(mavenConfigurationPath, "/opt/concord/conf/mvn.json", BindMode.READ_ONLY);
+
+            agent.withEnv("CONCORD_MAVEN_CFG", "/opt/concord/conf/mvn.json")
+                    .withFileSystemBind(mavenConfigurationPath, "/opt/concord/conf/mvn.json", BindMode.READ_ONLY);
+        }
+
+        if (opts.useLocalMavenRepository()) {
+            Path src = Paths.get(System.getProperty("user.home"), ".m2", "repository");
+            if (!Files.exists(src) || !Files.isDirectory(src)) {
+                log.warn("Can't mount local Maven repository into containers. The path doesn't exist or not a directory: {}", src.toAbsolutePath());
+            } else {
+                server.withFileSystemBind(src.toAbsolutePath().toString(), "/home/concord/.m2/repository");
+                agent.withFileSystemBind(src.toAbsolutePath().toString(), "/home/concord/.m2/repository");
+            }
+        }
+
         this.startAgent = opts.startAgent();
     }
 
@@ -141,7 +164,7 @@ public class ConcordDockerEnvironment implements ConcordEnvironment {
     private static ImagePullPolicy pullPolicy(Concord opts) {
         ImagePullPolicy p = opts.pullPolicy();
 
-        if (p == null){
+        if (p == null) {
             if ("latest".equals(opts.version())) {
                 return PullPolicy.alwaysPull();
             } else {
