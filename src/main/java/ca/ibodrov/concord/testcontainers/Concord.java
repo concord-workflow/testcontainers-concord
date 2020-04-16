@@ -149,7 +149,7 @@ public class Concord implements TestRule {
 
     /**
      * Path to {@code mvn.json} to use with the server and agent containers.
-     * Doesn't work for {@link #localMode}.
+     * Doesn't work with {@link #localMode}.
      */
     public Concord mavenConfigurationPath(String mavenConfigurationPath) {
         this.mavenConfigurationPath = mavenConfigurationPath;
@@ -163,6 +163,7 @@ public class Concord implements TestRule {
     /**
      * If {@code true} the the local maven repository {@code $HOME/.m2/repository}
      * will be mounted into the server and agent containers.
+     * Doesn't work with {@link #localMode}.
      */
     public Concord useLocalMavenRepository(boolean useLocalMavenRepository) {
         this.useLocalMavenRepository = useLocalMavenRepository;
