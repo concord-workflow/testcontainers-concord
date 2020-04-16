@@ -37,6 +37,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -215,6 +216,7 @@ public class ConcordDockerEnvironment implements ConcordEnvironment {
         try {
             Path dst = Files.createTempFile("mvn", ".json");
             Files.write(dst, new ObjectMapper().writeValueAsBytes(m), StandardOpenOption.TRUNCATE_EXISTING);
+            Files.setPosixFilePermissions(dst, PosixFilePermissions.fromString("rw-r--r--"));
             return dst;
         } catch (IOException e) {
             throw new RuntimeException("Error while creating a Maven configuration file: " + e.getMessage(), e);

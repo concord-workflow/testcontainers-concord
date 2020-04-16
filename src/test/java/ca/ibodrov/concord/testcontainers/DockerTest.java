@@ -29,7 +29,8 @@ import static org.junit.Assert.assertNotNull;
 public class DockerTest {
 
     @ClassRule
-    public static Concord concord = new Concord();
+    public static Concord concord = new Concord()
+            .useLocalMavenRepository(true);
 
     @Test
     public void testAdminApiToken() {
