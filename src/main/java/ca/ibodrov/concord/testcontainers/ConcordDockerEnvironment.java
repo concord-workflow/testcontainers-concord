@@ -20,6 +20,7 @@ package ca.ibodrov.concord.testcontainers;
  * =====
  */
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.BindMode;
@@ -31,9 +32,14 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.ImagePullPolicy;
 import org.testcontainers.images.PullPolicy;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ConcordDockerEnvironment implements ConcordEnvironment {
 
@@ -48,6 +54,8 @@ public class ConcordDockerEnvironment implements ConcordEnvironment {
     private String apiToken;
 
     public ConcordDockerEnvironment(Concord opts) {
+        validate(opts);
+
         ImagePullPolicy pullPolicy = pullPolicy(opts);
 
         Network network = Network.newNetwork();
@@ -100,11 +108,8 @@ public class ConcordDockerEnvironment implements ConcordEnvironment {
 
         String mavenConfigurationPath = opts.mavenConfigurationPath();
         if (mavenConfigurationPath != null) {
-            server.withEnv("CONCORD_MAVEN_CFG", "/opt/concord/conf/mvn.json")
-                    .withFileSystemBind(mavenConfigurationPath, "/opt/concord/conf/mvn.json", BindMode.READ_ONLY);
-
-            agent.withEnv("CONCORD_MAVEN_CFG", "/opt/concord/conf/mvn.json")
-                    .withFileSystemBind(mavenConfigurationPath, "/opt/concord/conf/mvn.json", BindMode.READ_ONLY);
+            mountMavenConfigurationFile(server, mavenConfigurationPath);
+            mountMavenConfigurationFile(agent, mavenConfigurationPath);
         }
 
         if (opts.useLocalMavenRepository()) {
@@ -113,9 +118,13 @@ public class ConcordDockerEnvironment implements ConcordEnvironment {
                 log.warn("Can't mount local Maven repository into containers. The path doesn't exist or not a directory: {}", src.toAbsolutePath());
             } else {
                 String hostPath = src.toAbsolutePath().toString();
-                server.withFileSystemBind(hostPath, "/home/concord/.m2/repository");
-                agent.withFileSystemBind(hostPath, "/home/concord/.m2/repository");
+                server.withFileSystemBind(hostPath, "/host/.m2/repository");
+                agent.withFileSystemBind(hostPath, "/host/.m2/repository");
             }
+
+            String cfg = createMavenConfigurationFile().toAbsolutePath().toString();
+            mountMavenConfigurationFile(server, cfg);
+            mountMavenConfigurationFile(agent, cfg);
         }
 
         this.startAgent = opts.startAgent();
@@ -187,5 +196,34 @@ public class ConcordDockerEnvironment implements ConcordEnvironment {
         }
 
         throw new IllegalArgumentException("Can't find the API token in logs");
+    }
+
+    private static void validate(Concord opts) {
+        if (opts.useLocalMavenRepository() && opts.mavenConfigurationPath() != null) {
+            log.warn("Can't use 'useLocalMavenRepository' and a 'mavenConfigurationPath' simultaneously.");
+        }
+    }
+
+    private static Path createMavenConfigurationFile() {
+        Map<String, Object> repo = new HashMap<>();
+        repo.put("id", "host");
+        repo.put("url", "file:///host/.m2/repository");
+
+        Map<String, Object> m = Collections.singletonMap("repositories",
+                Collections.singletonList(repo));
+
+        try {
+            Path dst = Files.createTempFile("mvn", ".json");
+            Files.write(dst, new ObjectMapper().writeValueAsBytes(m), StandardOpenOption.TRUNCATE_EXISTING);
+            return dst;
+        } catch (IOException e) {
+            throw new RuntimeException("Error while creating a Maven configuration file: " + e.getMessage(), e);
+        }
+    }
+
+    private static void mountMavenConfigurationFile(GenericContainer<?> container, String src) {
+        container.withEnv("CONCORD_MAVEN_CFG", "/opt/concord/conf/mvn.json")
+                .withFileSystemBind(src, "/opt/concord/conf/mvn.json", BindMode.READ_ONLY);
+
     }
 }

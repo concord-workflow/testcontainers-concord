@@ -164,6 +164,7 @@ public class Concord implements TestRule {
      * If {@code true} the the local maven repository {@code $HOME/.m2/repository}
      * will be mounted into the server and agent containers.
      * Doesn't work with {@link #localMode}.
+     * Exclusive with {@link #mavenConfigurationPath}
      */
     public Concord useLocalMavenRepository(boolean useLocalMavenRepository) {
         this.useLocalMavenRepository = useLocalMavenRepository;
