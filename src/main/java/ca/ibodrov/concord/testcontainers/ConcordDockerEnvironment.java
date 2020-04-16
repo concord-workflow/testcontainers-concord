@@ -112,8 +112,9 @@ public class ConcordDockerEnvironment implements ConcordEnvironment {
             if (!Files.exists(src) || !Files.isDirectory(src)) {
                 log.warn("Can't mount local Maven repository into containers. The path doesn't exist or not a directory: {}", src.toAbsolutePath());
             } else {
-                server.withFileSystemBind(src.toAbsolutePath().toString(), "/home/concord/.m2/repository");
-                agent.withFileSystemBind(src.toAbsolutePath().toString(), "/home/concord/.m2/repository");
+                String hostPath = src.toAbsolutePath().toString();
+                server.withFileSystemBind(hostPath, "/home/concord/.m2/repository");
+                agent.withFileSystemBind(hostPath, "/home/concord/.m2/repository");
             }
         }
 
