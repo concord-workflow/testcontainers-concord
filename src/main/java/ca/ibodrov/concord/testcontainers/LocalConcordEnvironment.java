@@ -41,9 +41,9 @@ import java.nio.file.StandardOpenOption;
 import java.util.Base64;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class ConcordLocalEnvironment implements ConcordEnvironment {
+public class LocalConcordEnvironment implements ConcordEnvironment {
 
-    private static final Logger log = LoggerFactory.getLogger(ConcordLocalEnvironment.class);
+    private static final Logger log = LoggerFactory.getLogger(LocalConcordEnvironment.class);
 
     private final GenericContainer<?> db;
     private final String apiToken;
@@ -51,10 +51,14 @@ public class ConcordLocalEnvironment implements ConcordEnvironment {
     private final String pathToRunnerV2;
     private final boolean startAgent;
 
+    private int apiPort;
+
     private ConcordServer server;
     private Agent agent;
 
-    public ConcordLocalEnvironment(Concord opts) {
+    public LocalConcordEnvironment(Concord opts) {
+        validate(opts);
+
         this.db = new GenericContainer<>("library/postgres:10")
                 .withEnv("POSTGRES_PASSWORD", "q1")
                 .withNetworkAliases("db")
@@ -70,7 +74,7 @@ public class ConcordLocalEnvironment implements ConcordEnvironment {
 
     @Override
     public int apiPort() {
-        return 8001;
+        return apiPort;
     }
 
     @Override
@@ -80,6 +84,8 @@ public class ConcordLocalEnvironment implements ConcordEnvironment {
 
     @Override
     public void start() {
+        apiPort = Utils.reservePort(8001);
+
         if (pathToRunnerV1 != null) {
             assertRunnerJar(pathToRunnerV1);
         }
@@ -139,7 +145,8 @@ public class ConcordLocalEnvironment implements ConcordEnvironment {
     private Path prepareConfigurationFile() throws IOException {
         Path dst = Files.createTempFile("server", ".dst");
 
-        String s = Resources.toString(ConcordLocalEnvironment.class.getResource("local/concord.conf"), Charsets.UTF_8);
+        String s = Resources.toString(LocalConcordEnvironment.class.getResource("local/concord.conf"), Charsets.UTF_8);
+        s = s.replaceAll("SERVER_PORT", String.valueOf(apiPort));
         s = s.replaceAll("DB_URL", "jdbc:postgresql://localhost:" + db.getFirstMappedPort() + "/postgres");
         s = s.replaceAll("API_TOKEN", apiToken);
         if (pathToRunnerV1 != null) {
@@ -151,6 +158,12 @@ public class ConcordLocalEnvironment implements ConcordEnvironment {
         Files.write(dst, s.getBytes(), StandardOpenOption.TRUNCATE_EXISTING);
 
         return dst;
+    }
+
+    private static void validate(Concord opts) {
+        if (opts.apiToken() != null) {
+            log.warn("Can't specify 'apiToken' value when using Mode.DOCKER");
+        }
     }
 
     private static String randomToken() {

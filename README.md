@@ -1,6 +1,7 @@
 # Testcontainers Integration for Concord
 
-Provides a JUnit 4 test rule to run Concord containers using [Testcontainers](https://www.testcontainers.org/).
+Provides a JUnit 4 test rule to run Concord containers using
+[Testcontainers](https://www.testcontainers.org/).
 
 Currently it requires the latest Concord version from `master`. 
 
@@ -18,7 +19,31 @@ public class MyTest {
 }
 ```
 
-See [test cases](./src/test/java/ca/ibodrov/concord/testcontainers/RuleTest.java) for details.
+By default the the DB, the Server and the Agent are started using Docker containers.
+See below for other options.
+
+See [test cases](./src/test/java/ca/ibodrov/concord/testcontainers/RuleTest.java) for
+details.
+
+## Remote Mode
+
+In this mode `testcontainers-concord` connect to a remove Concord instance.
+You need to provide the API's base URL and the token:
+
+```java
+public class MyTest {
+
+    @Rule
+    public static Concord concord = new Concord()
+            .mode(Concord.Mode.REMOTE)
+            .apiBaseUrl("http://localhost:8001")
+            .apiToken("...");
+
+    public void test() {
+        // ...
+    }  
+}
+```
 
 ## Local Mode
 
@@ -29,7 +54,7 @@ public class MyTest {
 
     @Rule
     public static Concord concord = new Concord()
-            .localMode(true);
+            .mode(Concord.Mode.LOCAL);
 
     public void test() {
         // ...

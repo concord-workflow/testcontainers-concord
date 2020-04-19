@@ -30,11 +30,12 @@ public class DockerTest {
 
     @ClassRule
     public static Concord concord = new Concord()
+            .mode(Concord.Mode.DOCKER)
             .useLocalMavenRepository(true);
 
     @Test
-    public void testAdminApiToken() {
-        assertNotNull(concord.adminApiToken());
+    public void testApiToken() {
+        assertNotNull(concord.environment().apiToken());
     }
 
     @Test
@@ -49,9 +50,28 @@ public class DockerTest {
         ConcordProcess p = concord.processes()
                 .start(new Payload()
                         .concordYml(yml)
-                        .parameter("arguments.name", nameValue));
+                        .arg("name", nameValue));
 
         p.waitForStatus(ProcessEntry.StatusEnum.FINISHED);
         p.assertLog(".*Hello, " + nameValue + ".*");
+    }
+
+    @Test
+    public void testSecrets() throws Exception {
+        String yml = "" +
+                "flows: \n" +
+                "  default:\n" +
+                "    - log: ${crypto.exportAsString('Default', 'testSecret', null)}";
+
+        String mySecretValue = "Hello, I'm a secret value!";
+        concord.secrets().createSecret(NewSecretQuery.builder()
+                .org("Default")
+                .name("testSecret")
+                .build(), mySecretValue.getBytes());
+
+        ConcordProcess p = concord.processes().start(new Payload().concordYml(yml));
+
+        p.waitForStatus(ProcessEntry.StatusEnum.FINISHED);
+        p.assertLog(".*" + mySecretValue + ".*");
     }
 }

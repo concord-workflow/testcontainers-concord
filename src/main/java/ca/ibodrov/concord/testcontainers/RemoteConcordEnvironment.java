@@ -9,9 +9,9 @@ package ca.ibodrov.concord.testcontainers;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,32 +20,34 @@ package ca.ibodrov.concord.testcontainers;
  * =====
  */
 
-import org.immutables.value.Value;
+import java.net.URI;
 
-import javax.annotation.Nullable;
-import java.util.List;
-import java.util.UUID;
+public class RemoteConcordEnvironment implements ConcordEnvironment {
 
-@Value.Immutable
-public interface ProcessListQuery {
+    private final URI baseUrl;
+    private final String apiToken;
 
-    @Nullable
-    UUID projectId();
-
-    @Nullable
-    List<String> tags();
-
-    @Value.Default
-    default int limit() {
-        return 1;
+    public RemoteConcordEnvironment(Concord opts) {
+        this.baseUrl = URI.create(opts.apiBaseUrl());
+        this.apiToken = opts.apiToken();
     }
 
-    @Value.Default
-    default int offset() {
-        return 0;
+    @Override
+    public int apiPort() {
+        return baseUrl.getPort();
     }
 
-    static ImmutableProcessListQuery.Builder builder() {
-        return ImmutableProcessListQuery.builder();
+    @Override
+    public String apiToken() {
+        return apiToken;
+    }
+
+    @Override
+    public void start() {
+        // TODO verify the remove environment
+    }
+
+    @Override
+    public void stop() {
     }
 }

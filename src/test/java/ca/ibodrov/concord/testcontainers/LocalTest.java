@@ -24,13 +24,11 @@ import com.walmartlabs.concord.client.ProcessEntry;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import static org.junit.Assert.assertNotNull;
-
 public class LocalTest {
 
     @ClassRule
     public static Concord concord = new Concord()
-            .localMode(true);
+            .mode(Concord.Mode.LOCAL);
 
     @Test
     public void testSimpleFlow() throws Exception {

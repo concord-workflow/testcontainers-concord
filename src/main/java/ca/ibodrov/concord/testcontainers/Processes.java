@@ -69,7 +69,7 @@ public final class Processes {
     }
 
     /**
-     * List processes.
+     * Creates a new process list query.
      */
     public List<ProcessEntry> list(ProcessListQuery query) throws ApiException {
         ProcessV2Api processApi = new ProcessV2Api(client);

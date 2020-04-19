@@ -28,26 +28,32 @@ import org.junit.runners.model.Statement;
 import org.testcontainers.images.ImagePullPolicy;
 import org.testcontainers.images.PullPolicy;
 
-import java.util.Map;
-
 public class Concord implements TestRule {
 
-    private String version = "latest";
-    private String serverImage = "walmartlabs/concord-server";
-    private String agentImage = "walmartlabs/concord-agent";
-    private String serverExtDirectory;
-    private String serverClassesDirectory;
-    private String mavenConfigurationPath;
-    private boolean useLocalMavenRepository;
-    private boolean streamServerLogs;
+    private boolean startAgent = true;
     private boolean streamAgentLogs;
-    private boolean localMode;
+    private boolean streamServerLogs;
+    private boolean useLocalMavenRepository;
+
+    private ImagePullPolicy pullPolicy;
+    private Mode mode = Mode.DOCKER;
+
+    private String agentImage = "walmartlabs/concord-agent";
+    private String apiBaseUrl = "http://localhost:8001";
+    private String apiToken;
+    private String mavenConfigurationPath;
     private String pathToRunnerV1 = "target/runner-v1.jar";
     private String pathToRunnerV2;
-    private boolean startAgent = true;
-    private ImagePullPolicy pullPolicy;
+    private String serverClassesDirectory;
+    private String serverExtDirectory;
+    private String serverImage = "walmartlabs/concord-server";
+    private String version = "latest";
 
     private ConcordEnvironment environment;
+
+    public ConcordEnvironment environment() {
+        return environment;
+    }
 
     /**
      * Returns the server's API port, e.g. 8001.
@@ -64,20 +70,51 @@ public class Concord implements TestRule {
     }
 
     /**
-     * Returns the default admin API token.
-     */
-    public String adminApiToken() {
-        return environment.apiToken();
-    }
-
-    /**
-     * Creates a new API Client using the default API token.
-     *
-     * @see #adminApiToken()
+     * Creates a new API Client using the currently configured (or generated) API token.
      */
     public ApiClient apiClient() {
         return new ConcordApiClient(apiUrlPrefix())
                 .setApiKey(environment.apiToken());
+    }
+
+    public String apiBaseUrl() {
+        return apiBaseUrl;
+    }
+
+    /**
+     * Sets the base URL of a remote Concord API server.
+     * Required for {@link Mode#REMOTE}.
+     */
+    public Concord apiBaseUrl(String apiBaseUrl) {
+        this.apiBaseUrl = apiBaseUrl;
+        return this;
+    }
+
+    public String apiToken() {
+        return apiToken;
+    }
+
+    /**
+     * Sets the default API token to use with a remote Concord API server.
+     * Required for {@link Mode#REMOTE}.
+     */
+    public Concord apiToken(String apiToken) {
+        this.apiToken = apiToken;
+        return this;
+    }
+
+    public Mode mode() {
+        return mode;
+    }
+
+    /**
+     * Sets the execution mode.
+     *
+     * @see Mode
+     */
+    public Concord mode(Mode mode) {
+        this.mode = mode;
+        return this;
     }
 
     public String version() {
@@ -149,7 +186,7 @@ public class Concord implements TestRule {
 
     /**
      * Path to {@code mvn.json} to use with the server and agent containers.
-     * Doesn't work with {@link #localMode}.
+     * Doesn't work with {@link Mode#LOCAL} or {@link Mode#REMOTE}.
      */
     public Concord mavenConfigurationPath(String mavenConfigurationPath) {
         this.mavenConfigurationPath = mavenConfigurationPath;
@@ -163,7 +200,7 @@ public class Concord implements TestRule {
     /**
      * If {@code true} the the local maven repository {@code $HOME/.m2/repository}
      * will be mounted into the server and agent containers.
-     * Doesn't work with {@link #localMode}.
+     * Doesn't work with {@link Mode#LOCAL} or {@link Mode#REMOTE}.
      * Exclusive with {@link #mavenConfigurationPath}
      */
     public Concord useLocalMavenRepository(boolean useLocalMavenRepository) {
@@ -195,21 +232,6 @@ public class Concord implements TestRule {
         return this;
     }
 
-    /**
-     * Enable local mode. In the local mode the Server and the Agent are
-     * started in the current JVM directly, without using Docker.
-     * Only the database is started in a container.
-     * <p/>
-     * Useful for debugging, i.e. it is possible to set a breakpoint in
-     * the server's (or a server plugin's) code while running a test.
-     * <p/>
-     * Default is {@code false}.
-     */
-    public Concord localMode(boolean localMode) {
-        this.localMode = localMode;
-        return this;
-    }
-
     public String pathToRunnerV1() {
         return pathToRunnerV1;
     }
@@ -219,7 +241,7 @@ public class Concord implements TestRule {
     }
 
     /**
-     * Path to the runner v1 JAR to use when {@link #localMode(boolean)}
+     * Path to the runner v1 JAR to use when {@link Mode#LOCAL}
      * is enabled.
      * <p/>
      * Typically points to the runner JAR file copied by Maven into
@@ -231,7 +253,7 @@ public class Concord implements TestRule {
     }
 
     /**
-     * Path to the runner v2 JAR to use when {@link #localMode(boolean)}
+     * Path to the runner v2 JAR to use when {@link Mode#LOCAL}
      * is enabled.
      * <p/>
      * Typically points to the runner JAR file copied by Maven into
@@ -274,6 +296,13 @@ public class Concord implements TestRule {
         return new Processes(apiClient());
     }
 
+    /**
+     * Utilities to work with Concord secrets.
+     */
+    public Secrets secrets() {
+        return new Secrets(apiClient());
+    }
+
     @Override
     public Statement apply(Statement base, Description description) {
         return new Statement() {
@@ -289,10 +318,38 @@ public class Concord implements TestRule {
     }
 
     private ConcordEnvironment createEnvironment() {
-        if (localMode) {
-            return new ConcordLocalEnvironment(this);
+        switch (mode) {
+            case LOCAL: {
+                return new LocalConcordEnvironment(this);
+            }
+            case DOCKER: {
+                return new DockerConcordEnvironment(this);
+            }
+            case REMOTE: {
+                return new RemoteConcordEnvironment(this);
+            }
+            default: {
+                throw new IllegalArgumentException("Unsupported mode: " + mode);
+            }
         }
+    }
 
-        return new ConcordDockerEnvironment(this);
+    public enum Mode {
+
+        /**
+         * The Server and the Agent are started directly in the current VM.
+         * Requires the appropriate modules in the classpath.
+         */
+        LOCAL,
+
+        /**
+         * The Server and the Agent are started using Docker and pre-built images.
+         */
+        DOCKER,
+
+        /**
+         * Connect to a remote Concord instance.
+         */
+        REMOTE
     }
 }

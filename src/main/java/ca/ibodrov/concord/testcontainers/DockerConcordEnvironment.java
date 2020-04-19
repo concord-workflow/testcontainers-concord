@@ -42,9 +42,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ConcordDockerEnvironment implements ConcordEnvironment {
+public class DockerConcordEnvironment implements ConcordEnvironment {
 
-    private static final Logger log = LoggerFactory.getLogger(ConcordDockerEnvironment.class);
+    private static final Logger log = LoggerFactory.getLogger(DockerConcordEnvironment.class);
 
     private final GenericContainer<?> db;
     private final GenericContainer<?> server;
@@ -54,7 +54,7 @@ public class ConcordDockerEnvironment implements ConcordEnvironment {
 
     private String apiToken;
 
-    public ConcordDockerEnvironment(Concord opts) {
+    public DockerConcordEnvironment(Concord opts) {
         validate(opts);
 
         ImagePullPolicy pullPolicy = pullPolicy(opts);
@@ -200,6 +200,10 @@ public class ConcordDockerEnvironment implements ConcordEnvironment {
     }
 
     private static void validate(Concord opts) {
+        if (opts.apiToken() != null) {
+            log.warn("Can't specify 'apiToken' value when using Mode.DOCKER");
+        }
+
         if (opts.useLocalMavenRepository() && opts.mavenConfigurationPath() != null) {
             log.warn("Can't use 'useLocalMavenRepository' and a 'mavenConfigurationPath' simultaneously.");
         }
