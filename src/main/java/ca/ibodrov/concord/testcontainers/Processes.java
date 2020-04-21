@@ -28,8 +28,10 @@ import com.walmartlabs.concord.client.ProcessEntry;
 import com.walmartlabs.concord.client.ProcessV2Api;
 import com.walmartlabs.concord.client.StartProcessResponse;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public final class Processes {
 
@@ -57,6 +59,20 @@ public final class Processes {
         }
 
         return new ConcordProcess(client, resp.getData().getInstanceId());
+    }
+
+    /**
+     * Fetches an existing Concord process using the provided ID.
+     */
+    public ConcordProcess get(UUID instanceId) throws ApiException {
+        ProcessV2Api processV2Api = new ProcessV2Api(client);
+
+        ProcessEntry entry = processV2Api.get(instanceId, Collections.emptyList());
+        if (entry == null) {
+            throw new IllegalArgumentException("Process not found: " + instanceId);
+        }
+
+        return new ConcordProcess(client, instanceId);
     }
 
     /**
