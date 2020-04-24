@@ -28,6 +28,10 @@ import org.junit.runners.model.Statement;
 import org.testcontainers.images.ImagePullPolicy;
 import org.testcontainers.images.PullPolicy;
 
+import java.util.ArrayList;
+import java.util.List;
+
+@SuppressWarnings("unused")
 public class Concord implements TestRule {
 
     private boolean startAgent = true;
@@ -48,6 +52,8 @@ public class Concord implements TestRule {
     private String serverExtDirectory;
     private String serverImage = "walmartlabs/concord-server";
     private String version = "latest";
+
+    private List<ContainerListener> containerListeners;
 
     private ConcordEnvironment environment;
 
@@ -286,6 +292,45 @@ public class Concord implements TestRule {
 
     public Concord pullPolicy(ImagePullPolicy pullPolicy) {
         this.pullPolicy = pullPolicy;
+        return this;
+    }
+
+    /**
+     * Returns the test host's address that can be used to connect
+     * to the test host's services from inside a container.
+     */
+    public String hostAddressAccessibleByContainers() {
+        switch (mode) {
+            case REMOTE: {
+                throw new IllegalStateException("Can't determine the test host's address when using the REMOTE mode.");
+            }
+            case LOCAL: {
+                // when running in the LOCAL mode, the test host's resources can be accessed by using localhost
+                return "localhost";
+            }
+            case DOCKER: {
+                // when running in the DOCKER mode use the host name provided by Testcontainers
+                return "host.testcontainers.internal";
+            }
+            default: {
+                throw new IllegalStateException("Unsupported mode: " + mode);
+            }
+        }
+    }
+
+    public List<ContainerListener> containerListeners() {
+        return this.containerListeners;
+    }
+
+    /**
+     * Adds a {@link ContainerListener} that can be used to perform
+     * additional actions before containers start.
+     */
+    public Concord containerListener(ContainerListener listener) {
+        if (this.containerListeners == null) {
+            this.containerListeners = new ArrayList<>();
+        }
+        this.containerListeners.add(listener);
         return this;
     }
 

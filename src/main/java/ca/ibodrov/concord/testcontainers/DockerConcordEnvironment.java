@@ -38,9 +38,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermissions;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class DockerConcordEnvironment implements ConcordEnvironment {
 
@@ -51,6 +49,8 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
     private final GenericContainer<?> agent;
 
     private final boolean startAgent;
+
+    private final List<ContainerListener> containerListeners;
 
     private String apiToken;
 
@@ -129,6 +129,8 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
         }
 
         this.startAgent = opts.startAgent();
+
+        this.containerListeners = opts.containerListeners() != null ? new ArrayList<>(opts.containerListeners()) : Collections.emptyList();
     }
 
     @Override
@@ -157,10 +159,14 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
 
     @Override
     public void start() {
+        fireBeforeStart(ContainerType.DB);
         this.db.start();
+
+        fireBeforeStart(ContainerType.SERVER);
         this.server.start();
 
         if (startAgent) {
+            fireBeforeStart(ContainerType.AGENT);
             this.agent.start();
         }
     }
@@ -170,6 +176,10 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
         this.agent.stop();
         this.server.stop();
         this.db.stop();
+    }
+
+    private void fireBeforeStart(ContainerType type) {
+        this.containerListeners.forEach(l -> l.beforeStart(type));
     }
 
     private static ImagePullPolicy pullPolicy(Concord opts) {
@@ -211,8 +221,9 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
 
     private static Path createMavenConfigurationFile() {
         Map<String, Object> repo = new HashMap<>();
-        repo.put("id", "host");
+        repo.put("id", "local");
         repo.put("url", "file:///host/.m2/repository");
+        repo.put("snapshotPolicy", Collections.singletonMap("updatePolicy", "always"));
 
         Map<String, Object> m = Collections.singletonMap("repositories",
                 Collections.singletonList(repo));
