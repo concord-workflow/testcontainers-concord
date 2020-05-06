@@ -24,6 +24,9 @@ import com.walmartlabs.concord.client.ProcessEntry;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 public class DockerTest {
@@ -54,6 +57,32 @@ public class DockerTest {
 
         p.waitForStatus(ProcessEntry.StatusEnum.FINISHED);
         p.assertLog(".*Hello, " + nameValue + ".*");
+    }
+
+    @Test
+    public void testTags() throws Exception {
+        String tag = "tag_" + System.currentTimeMillis();
+
+        String yml = "" +
+                "flows: \n" +
+                "  default:\n" +
+                "    - log: Hello, Concord!";
+
+        ConcordProcess p1 = concord.processes()
+                .start(new Payload()
+                        .concordYml(yml)
+                        .tag(tag));
+
+        p1.waitForStatus(ProcessEntry.StatusEnum.FINISHED);
+
+        ConcordProcess p2 = concord.processes().get(p1.instanceId());
+        p2.assertLog(".*Hello, Concord!.*");
+
+        List<ProcessEntry> l = concord.processes().list(ProcessListQuery.builder()
+                .addTags(tag)
+                .build());
+        assertEquals(1, l.size());
+        assertEquals(p2.instanceId(), l.get(0).getInstanceId());
     }
 
     @Test

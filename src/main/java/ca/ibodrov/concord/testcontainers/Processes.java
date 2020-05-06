@@ -81,7 +81,7 @@ public final class Processes {
      * @see #start(Map)
      */
     public ConcordProcess start(Payload builder) throws ApiException {
-        return start(builder.getInput());
+        return start(builder.build());
     }
 
     /**

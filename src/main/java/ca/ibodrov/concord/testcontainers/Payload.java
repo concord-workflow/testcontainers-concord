@@ -20,15 +20,18 @@ package ca.ibodrov.concord.testcontainers;
  * =====
  */
 
+import com.walmartlabs.concord.common.IOUtils;
+
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.net.URL;
+import java.util.*;
 
 public final class Payload {
 
     private final Map<String, Object> input = new LinkedHashMap<>();
+    private final List<String> tags = new ArrayList<>();
 
     /**
      * Sets the content of the main concord.yml file.
@@ -76,6 +79,14 @@ public final class Payload {
         return this;
     }
 
+    public Payload resource(String name, URL url) throws IOException {
+        byte[] ab;
+        try (InputStream in = url.openStream()) {
+            ab = IOUtils.toByteArray(in);
+        }
+        return file(name, ab);
+    }
+
     public Payload parent(UUID parentInstanceId) {
         input.put("parentInstanceId", parentInstanceId.toString());
         return this;
@@ -91,7 +102,19 @@ public final class Payload {
         return this;
     }
 
-    Map<String, Object> getInput() {
-        return input;
+    public Payload tag(String tag) {
+        tags.add(tag);
+        return this;
+    }
+
+    Map<String, Object> build() {
+        Map<String, Object> m = new HashMap<>(input);
+
+        if (!tags.isEmpty()) {
+            String s = String.join(",", tags);
+            m.put("tags", s);
+        }
+
+        return m;
     }
 }

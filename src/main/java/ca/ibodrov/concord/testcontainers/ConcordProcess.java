@@ -102,7 +102,7 @@ public final class ConcordProcess {
     }
 
     /**
-     * Asserts a pattern in the process' log.
+     * Check if the process' log matches the specified pattern (regex).
      */
     public void assertLog(@Language("RegExp") String pattern) throws ApiException {
         byte[] ab = getLog();
@@ -111,7 +111,7 @@ public final class ConcordProcess {
     }
 
     /**
-     * Asserts a no pattern in the process' log.
+     * Check if the process' log doesn't match the specified pattern (regex).
      */
     public void assertNoLog(@Language("RegExp") String pattern) throws ApiException {
         byte[] ab = getLog();
@@ -119,6 +119,9 @@ public final class ConcordProcess {
         assertEquals(msg, 0, grep(pattern, ab).size());
     }
 
+    /**
+     * Check if the process' log matches the specified pattern (regex) at least the specified number of times.
+     */
     public void assertLogAtLeast(@Language("RegExp") String pattern, int times) throws ApiException {
         byte[] ab = getLog();
         assertTrue(times <= grep(pattern, ab).size());
@@ -141,7 +144,7 @@ public final class ConcordProcess {
     }
 
     /**
-     * Disable process.
+     * Disable the process.
      */
     public ProcessEntry disable() throws ApiException {
         ProcessApi processApi = new ProcessApi(client);
@@ -151,15 +154,24 @@ public final class ConcordProcess {
         return processV2Api.get(instanceId, null);
     }
 
+    /**
+     * Kill (cancel) the process and all it's subprocesses.
+     */
     public void killCascade() throws ApiException {
         ProcessApi processApi = new ProcessApi(client);
         processApi.killCascade(instanceId);
     }
 
+    /**
+     * Returns a list of subprocesses.
+     */
     public List<ProcessEntry> subprocesses() throws ApiException {
         return subprocesses((String[]) null);
     }
 
+    /**
+     * Returns a list of subprocesses tagged with any of the specified values.
+     */
     public List<ProcessEntry> subprocesses(String ... tags) throws ApiException {
         ProcessApi processApi = new ProcessApi(client);
         return processApi.listSubprocesses(instanceId, tags == null ? null : Arrays.asList(tags));
