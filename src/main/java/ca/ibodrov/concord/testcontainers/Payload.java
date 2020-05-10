@@ -74,7 +74,7 @@ public final class Payload {
         return this;
     }
 
-    public Payload out(String ...variables) {
+    public Payload out(String... variables) {
         input.put("out", Arrays.asList(variables).toArray());
         return this;
     }
