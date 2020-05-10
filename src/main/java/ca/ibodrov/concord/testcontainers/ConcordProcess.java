@@ -20,6 +20,7 @@ package ca.ibodrov.concord.testcontainers;
  * =====
  */
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.reflect.TypeToken;
 import com.squareup.okhttp.Call;
 import com.walmartlabs.concord.ApiClient;
@@ -30,10 +31,7 @@ import org.intellij.lang.annotations.Language;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.lang.reflect.Type;
 import java.util.*;
 
@@ -175,6 +173,20 @@ public final class ConcordProcess {
     public List<ProcessEntry> subprocesses(String ... tags) throws ApiException {
         ProcessApi processApi = new ProcessApi(client);
         return processApi.listSubprocesses(instanceId, tags == null ? null : Arrays.asList(tags));
+    }
+
+    /**
+     * Returns process out variables.
+     */
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getOutVariables() throws ApiException {
+        ProcessApi processApi = new ProcessApi(client);
+        File outJson = processApi.downloadAttachment(instanceId, "out.json");
+        try {
+            return new ObjectMapper().readValue(outJson, Map.class);
+        } catch (Exception e) {
+            throw new RuntimeException("Error converting out variables: " + e.getMessage());
+        }
     }
 
     private byte[] getLog() throws ApiException {

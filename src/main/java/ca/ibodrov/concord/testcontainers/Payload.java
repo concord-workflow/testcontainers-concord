@@ -74,6 +74,11 @@ public final class Payload {
         return this;
     }
 
+    public Payload out(String... variables) {
+        input.put("out", Arrays.asList(variables).toArray());
+        return this;
+    }
+
     public Payload file(String name, byte[] content) {
         input.put(name, content);
         return this;
