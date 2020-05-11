@@ -42,7 +42,10 @@ public class Concord implements TestRule {
     private ImagePullPolicy pullPolicy;
     private Mode mode = Mode.DOCKER;
 
+    private String dbImage = "library/postgres:10";
     private String agentImage = "walmartlabs/concord-agent";
+    private String serverImage = "walmartlabs/concord-server";
+
     private String apiBaseUrl = "http://localhost:8001";
     private String apiToken;
     private String mavenConfigurationPath;
@@ -50,7 +53,6 @@ public class Concord implements TestRule {
     private String pathToRunnerV2;
     private String serverClassesDirectory;
     private String serverExtDirectory;
-    private String serverImage = "walmartlabs/concord-server";
     private String version = "latest";
 
     private List<ContainerListener> containerListeners;
@@ -132,6 +134,15 @@ public class Concord implements TestRule {
      */
     public Concord version(String version) {
         this.version = version;
+        return this;
+    }
+
+    public String dbImage() {
+        return dbImage;
+    }
+
+    public Concord dbImage(String dbImage) {
+        this.dbImage = dbImage;
         return this;
     }
 

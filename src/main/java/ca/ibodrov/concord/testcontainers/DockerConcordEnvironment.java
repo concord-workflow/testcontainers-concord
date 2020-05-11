@@ -61,7 +61,7 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
 
         Network network = Network.newNetwork();
 
-        this.db = new GenericContainer<>("library/postgres:10")
+        this.db = new GenericContainer<>(opts.dbImage())
                 .withEnv("POSTGRES_PASSWORD", "q1")
                 .withNetworkAliases("db")
                 .withNetwork(network);
