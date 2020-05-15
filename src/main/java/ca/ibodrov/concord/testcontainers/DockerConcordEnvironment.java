@@ -23,7 +23,6 @@ package ca.ibodrov.concord.testcontainers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.OutputFrame;
@@ -31,6 +30,7 @@ import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.ImagePullPolicy;
 import org.testcontainers.images.PullPolicy;
+import org.testcontainers.utility.MountableFile;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -78,7 +78,7 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
 
         String serverExtDirectory = opts.serverExtDirectory();
         if (serverExtDirectory != null) {
-            server.withFileSystemBind(serverExtDirectory, "/opt/concord/server/ext", BindMode.READ_ONLY);
+            server.withCopyFileToContainer(MountableFile.forHostPath(serverExtDirectory), "/opt/concord/server/ext");
         }
 
         String serverClassesDirectory = opts.serverClassesDirectory();
@@ -87,7 +87,7 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
             if (!src.startsWith("/")) {
                 src = System.getProperty("user.dir") + "/" + src;
             }
-            server.withFileSystemBind(src, "/opt/concord/server/classes/", BindMode.READ_ONLY);
+            server.withCopyFileToContainer(MountableFile.forHostPath(src), "/opt/concord/server/classes/");
         }
 
         if (opts.streamServerLogs()) {
@@ -230,7 +230,7 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
 
         try {
             Path dst = Files.createTempFile("mvn", ".json");
-            Files.write(dst, new ObjectMapper().writeValueAsBytes(m), StandardOpenOption.TRUNCATE_EXISTING);
+            Files.write(dst, new ObjectMapper().writeValueAsBytes(m), StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE);
             Files.setPosixFilePermissions(dst, PosixFilePermissions.fromString("rw-r--r--"));
             return dst;
         } catch (IOException e) {
@@ -240,7 +240,6 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
 
     private static void mountMavenConfigurationFile(GenericContainer<?> container, String src) {
         container.withEnv("CONCORD_MAVEN_CFG", "/opt/concord/conf/mvn.json")
-                .withFileSystemBind(src, "/opt/concord/conf/mvn.json", BindMode.READ_ONLY);
-
+                .withCopyFileToContainer(MountableFile.forHostPath(src), "/opt/concord/conf/mvn.json");
     }
 }
