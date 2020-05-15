@@ -12,7 +12,7 @@
 
     <groupId>ca.ibodrov.concord</groupId>
     <artifactId>testcontainers-concord</artifactId>
-    <version>0.0.13-SNAPSHOT</version>
+    <version>0.0.14-SNAPSHOT</version>
     <packaging>takari-jar</packaging>
 
     <name>testcontainers-concord</name>
@@ -33,7 +33,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <concord.version>1.46.0</concord.version>
+        <concord.version>1.49.0</concord.version>
         <testcontainers.version>1.13.0</testcontainers.version>
         <jetbrains.annotations.version>19.0.0</jetbrains.annotations.version>
     </properties>
@@ -158,7 +158,7 @@
             <plugin>
                 <groupId>io.takari.maven.plugins</groupId>
                 <artifactId>takari-lifecycle-plugin</artifactId>
-                <version>1.13.9</version>
+                <version>1.13.10</version>
                 <extensions>true</extensions>
                 <configuration>
                     <proc>proc</proc>
