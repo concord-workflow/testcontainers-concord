@@ -359,6 +359,20 @@ public class Concord implements TestRule {
         return new Secrets(apiClient());
     }
 
+    /**
+     * Utilities to work with Concord organizations.
+     */
+    public Organizations organizations() {
+        return new Organizations(apiClient());
+    }
+
+    /**
+     * Utilities to work with Concord organizations.
+     */
+    public Projects projects() {
+        return new Projects(apiClient());
+    }
+
     @Override
     public Statement apply(Statement base, Description description) {
         return new Statement() {
