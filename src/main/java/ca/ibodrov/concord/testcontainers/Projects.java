@@ -26,17 +26,15 @@ import com.walmartlabs.concord.client.ProjectEntry;
 import com.walmartlabs.concord.client.ProjectOperationResponse;
 import com.walmartlabs.concord.client.ProjectsApi;
 
-public class Projects
-{
+public class Projects {
+
     private final ProjectsApi projectApi;
 
     Projects(ApiClient apiClient) {
         this.projectApi = new ProjectsApi(apiClient);
     }
 
-    public ProjectOperationResponse create(String orgName, String projectName)
-            throws ApiException
-    {
+    public ProjectOperationResponse create(String orgName, String projectName)  throws ApiException {
         ProjectEntry projectEntry = new ProjectEntry()
                 .setName(projectName)
                 .setOrgName(orgName)
@@ -45,5 +43,4 @@ public class Projects
 
         return projectApi.createOrUpdate(orgName, projectEntry);
     }
-
 }

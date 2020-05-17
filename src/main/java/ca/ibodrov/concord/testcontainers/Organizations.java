@@ -25,20 +25,16 @@ import com.walmartlabs.concord.ApiException;
 import com.walmartlabs.concord.client.CreateOrganizationResponse;
 import com.walmartlabs.concord.client.OrganizationEntry;
 import com.walmartlabs.concord.client.OrganizationsApi;
-import com.walmartlabs.concord.client.ProjectOperationResponse;
 
-public class Organizations
-{
+public class Organizations {
+
     private final OrganizationsApi organizationsApi;
 
-    Organizations(ApiClient apiClient)
-    {
+    Organizations(ApiClient apiClient) {
         this.organizationsApi = new OrganizationsApi(apiClient);
     }
 
-    public CreateOrganizationResponse create(String orgName)
-            throws ApiException
-    {
+    public CreateOrganizationResponse create(String orgName) throws ApiException {
         OrganizationEntry orgEntry = new OrganizationEntry();
         orgEntry.setName(orgName);
         return organizationsApi.createOrUpdate(orgEntry);
