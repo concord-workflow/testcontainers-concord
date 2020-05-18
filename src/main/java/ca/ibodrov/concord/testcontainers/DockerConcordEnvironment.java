@@ -123,7 +123,7 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
                 agent.withFileSystemBind(hostPath, "/host/.m2/repository");
             }
 
-            String cfg = createMavenConfigurationFile().toAbsolutePath().toString();
+            String cfg = createMavenConfigurationFile(opts).toAbsolutePath().toString();
             mountMavenConfigurationFile(server, cfg);
             mountMavenConfigurationFile(agent, cfg);
         }
@@ -219,14 +219,23 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
         }
     }
 
-    private static Path createMavenConfigurationFile() {
-        Map<String, Object> repo = new HashMap<>();
-        repo.put("id", "local");
-        repo.put("url", "file:///host/.m2/repository");
-        repo.put("snapshotPolicy", Collections.singletonMap("updatePolicy", "always"));
+    private static Path createMavenConfigurationFile(Concord opts) {
+        List<Map<String, Object>> repositories = new ArrayList<>();
 
-        Map<String, Object> m = Collections.singletonMap("repositories",
-                Collections.singletonList(repo));
+        Map<String, Object> localMavenRepository = new HashMap<>();
+        localMavenRepository.put("id", "local");
+        localMavenRepository.put("url", "file:///host/.m2/repository");
+        localMavenRepository.put("snapshotPolicy", Collections.singletonMap("updatePolicy", "always"));
+        repositories.add(localMavenRepository);
+
+        if (opts.useMavenCentral()) {
+            Map<String, Object> central = new HashMap<>();
+            central.put("id", "central");
+            central.put("url", "https://repo.maven.apache.org/maven2/");
+            repositories.add(central);
+        }
+
+        Map<String, Object> m = Collections.singletonMap("repositories", repositories);
 
         try {
             Path dst = Files.createTempFile("mvn", ".json");
