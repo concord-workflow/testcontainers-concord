@@ -38,6 +38,7 @@ public class Concord implements TestRule {
     private boolean streamAgentLogs;
     private boolean streamServerLogs;
     private boolean useLocalMavenRepository;
+    private boolean useMavenCentral = true;
 
     private ImagePullPolicy pullPolicy;
     private Mode mode = Mode.DOCKER;
@@ -212,6 +213,18 @@ public class Concord implements TestRule {
 
     public boolean useLocalMavenRepository() {
         return this.useLocalMavenRepository;
+    }
+
+    /**
+     * If {@code true} Maven Central will be used for artifact resolution.
+     */
+    public Concord useMavenCentral(boolean useMavenCentral) {
+        this.useMavenCentral = useMavenCentral;
+        return this;
+    }
+
+    public boolean useMavenCentral() {
+        return this.useMavenCentral;
     }
 
     /**

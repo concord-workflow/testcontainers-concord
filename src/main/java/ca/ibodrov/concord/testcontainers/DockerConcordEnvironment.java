@@ -111,19 +111,19 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
         if (mavenConfigurationPath != null) {
             mountMavenConfigurationFile(server, mavenConfigurationPath);
             mountMavenConfigurationFile(agent, mavenConfigurationPath);
-        }
-
-        if (opts.useLocalMavenRepository()) {
-            Path src = Paths.get(System.getProperty("user.home"), ".m2", "repository");
-            if (!Files.exists(src) || !Files.isDirectory(src)) {
-                log.warn("Can't mount local Maven repository into containers. The path doesn't exist or not a directory: {}", src.toAbsolutePath());
-            } else {
-                String hostPath = src.toAbsolutePath().toString();
-                server.withFileSystemBind(hostPath, "/host/.m2/repository");
-                agent.withFileSystemBind(hostPath, "/host/.m2/repository");
+        } else {
+            if (opts.useLocalMavenRepository()) {
+                Path src = Paths.get(System.getProperty("user.home"), ".m2", "repository");
+                if (!Files.exists(src) || !Files.isDirectory(src)) {
+                    log.warn("Can't mount local Maven repository into containers. The path doesn't exist or not a directory: {}", src.toAbsolutePath());
+                } else {
+                    String hostPath = src.toAbsolutePath().toString();
+                    server.withFileSystemBind(hostPath, "/host/.m2/repository");
+                    agent.withFileSystemBind(hostPath, "/host/.m2/repository");
+                }
             }
 
-            String cfg = createMavenConfigurationFile().toAbsolutePath().toString();
+            String cfg = createMavenConfigurationFile(opts).toAbsolutePath().toString();
             mountMavenConfigurationFile(server, cfg);
             mountMavenConfigurationFile(agent, cfg);
         }
@@ -214,19 +214,30 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
             log.warn("Can't specify 'apiToken' value when using Mode.DOCKER");
         }
 
-        if (opts.useLocalMavenRepository() && opts.mavenConfigurationPath() != null) {
-            log.warn("Can't use 'useLocalMavenRepository' and a 'mavenConfigurationPath' simultaneously.");
+        if ((opts.useMavenCentral() || opts.useLocalMavenRepository()) && opts.mavenConfigurationPath() != null) {
+            log.warn("The 'mavenConfigurationPath' option is mutually exclusive with 'useLocalMavenRepository' or 'useMavenCentral'.");
         }
     }
 
-    private static Path createMavenConfigurationFile() {
-        Map<String, Object> repo = new HashMap<>();
-        repo.put("id", "local");
-        repo.put("url", "file:///host/.m2/repository");
-        repo.put("snapshotPolicy", Collections.singletonMap("updatePolicy", "always"));
+    private static Path createMavenConfigurationFile(Concord opts) {
+        List<Map<String, Object>> repositories = new ArrayList<>();
 
-        Map<String, Object> m = Collections.singletonMap("repositories",
-                Collections.singletonList(repo));
+        if (opts.useLocalMavenRepository()) {
+            Map<String, Object> local = new HashMap<>();
+            local.put("id", "local");
+            local.put("url", "file:///host/.m2/repository");
+            local.put("snapshotPolicy", Collections.singletonMap("updatePolicy", "always"));
+            repositories.add(local);
+        }
+
+        if (opts.useMavenCentral()) {
+            Map<String, Object> central = new HashMap<>();
+            central.put("id", "central");
+            central.put("url", "https://repo.maven.apache.org/maven2/");
+            repositories.add(central);
+        }
+
+        Map<String, Object> m = Collections.singletonMap("repositories", repositories);
 
         try {
             Path dst = Files.createTempFile("mvn", ".json");
