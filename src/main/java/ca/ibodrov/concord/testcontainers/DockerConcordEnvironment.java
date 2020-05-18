@@ -215,7 +215,7 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
         }
 
         if ((opts.useMavenCentral() || opts.useLocalMavenRepository()) && opts.mavenConfigurationPath() != null) {
-            log.warn("Can't use 'mavenConfigurationPath' is mutually exclusive with 'useLocalMavenRepository' or 'useMavenCentral' simultaneously.");
+            log.warn("The 'mavenConfigurationPath' option is mutually exclusive with 'useLocalMavenRepository' or 'useMavenCentral'.");
         }
     }
 
