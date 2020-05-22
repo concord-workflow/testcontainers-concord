@@ -42,6 +42,13 @@ public final class Processes {
     }
 
     /**
+     * Build a new process.
+     */
+    public ProcessBuilder create() {
+        return new ProcessBuilder(client, this);
+    }
+
+    /**
      * Starts a new Concord process using the provided data as the request parameters.
      *
      * @see <a href="https://concord.walmartlabs.com/docs/api/process.html#form-data">API docs</a>.

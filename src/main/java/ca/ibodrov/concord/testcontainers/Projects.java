@@ -34,7 +34,7 @@ public class Projects {
         this.projectApi = new ProjectsApi(apiClient);
     }
 
-    public ProjectOperationResponse create(String orgName, String projectName)  throws ApiException {
+    public ProjectOperationResponse create(String orgName, String projectName) throws ApiException {
         ProjectEntry projectEntry = new ProjectEntry()
                 .setName(projectName)
                 .setOrgName(orgName)

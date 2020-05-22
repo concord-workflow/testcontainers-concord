@@ -24,15 +24,17 @@ import com.walmartlabs.concord.ApiClient;
 import com.walmartlabs.concord.ApiException;
 import com.walmartlabs.concord.ApiResponse;
 import com.walmartlabs.concord.client.ClientUtils;
+import com.walmartlabs.concord.client.ProcessEntry;
 import com.walmartlabs.concord.client.SecretOperationResponse;
 import com.walmartlabs.concord.common.IOUtils;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.URI;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public final class Utils {
@@ -70,6 +72,37 @@ public final class Utils {
         }
 
         throw new RuntimeException("Can't reserve a port (starting from " + start + ")");
+    }
+
+    public static boolean isSame(ProcessEntry.StatusEnum status, ProcessEntry.StatusEnum first, ProcessEntry.StatusEnum... more) {
+        if (status == first) {
+            return true;
+        }
+
+        if (more != null) {
+            for (ProcessEntry.StatusEnum s : more) {
+                if (status == s) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public static List<String> grep(String pattern, byte[] ab) {
+        List<String> result = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(ab)))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.matches(pattern)) {
+                    result.add(line);
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return result;
     }
 
     private Utils() {

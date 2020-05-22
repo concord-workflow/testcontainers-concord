@@ -103,4 +103,21 @@ public class DockerTest {
         p.waitForStatus(ProcessEntry.StatusEnum.FINISHED);
         p.assertLog(".*" + mySecretValue + ".*");
     }
+
+    @Test
+    public void testProcessLogStreaming() throws Exception {
+        String yml = "" +
+                "flows: \n" +
+                "  default:\n" +
+                "    - log: Hello, Concord!";
+
+        ConcordProcess p = concord.processes()
+                .create()
+                .streamLogs(true)
+                .payload(new Payload().concordYml(yml))
+                .start();
+
+        p.waitForStatus(ProcessEntry.StatusEnum.FINISHED);
+        p.assertLog(".*Hello, Concord!.*");
+    }
 }

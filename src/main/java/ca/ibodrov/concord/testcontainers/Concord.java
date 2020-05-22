@@ -394,7 +394,11 @@ public class Concord implements TestRule {
                 try (ConcordEnvironment env = createEnvironment()) {
                     env.start();
                     Concord.this.environment = env;
-                    base.evaluate();
+                    try {
+                        base.evaluate();
+                    } finally {
+                        ProcessLogStreamers.stop();
+                    }
                 }
             }
         };

@@ -20,8 +20,10 @@ package ca.ibodrov.concord.testcontainers;
  * =====
  */
 
+import ca.ibodrov.concord.testcontainers.Concord.Mode;
 import com.walmartlabs.concord.common.IOUtils;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -109,6 +111,33 @@ public final class Payload {
 
     public Payload tag(String tag) {
         tags.add(tag);
+        return this;
+    }
+
+    /**
+     * Enable remote debugging for the process.
+     * The process will listen on the specified {@code port}, optionally
+     * waiting for the debugger to connect.
+     * <p/>
+     * The remote debug mode only works with {@link Mode#LOCAL}
+     * and {@link Mode#REMOTE} as it requires being able to connect to
+     * the remote agent host.
+     *
+     * @param port    local port to listen for debugger connections.
+     * @param suspend if {@code true} the process waits for the debugger
+     *                to connect before it starts running.
+     */
+    public Payload remoteDebug(int port, boolean suspend) {
+        String template = "{ \"jvmArgs\": [\"-Xdebug\", \"-Xrunjdwp:transport=dt_socket,address=%d,server=y,suspend=%s\"] }";
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try {
+            baos.write(String.format(template, port, suspend ? 'y' : 'n').getBytes());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        input.put("_agent.json", baos.toByteArray());
         return this;
     }
 

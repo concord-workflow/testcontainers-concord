@@ -31,7 +31,7 @@ import org.intellij.lang.annotations.Language;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
 import java.lang.reflect.Type;
 import java.util.*;
 
@@ -57,7 +57,7 @@ public final class ConcordProcess {
         return instanceId;
     }
 
-    public ProcessEntry getEntry(String ... includes) throws ApiException {
+    public ProcessEntry getEntry(String... includes) throws ApiException {
         ProcessV2Api api = new ProcessV2Api(client);
         return api.get(instanceId, Arrays.asList(includes));
     }
@@ -71,7 +71,7 @@ public final class ConcordProcess {
     public ProcessEntry expectStatus(StatusEnum status, StatusEnum... more) throws ApiException {
         ProcessEntry pe = waitForStatus(status, more);
 
-        if (!isSame(pe.getStatus(), status, more)) {
+        if (!Utils.isSame(pe.getStatus(), status, more)) {
             throw new IllegalStateException("Unexpected status of the process: " + pe.getStatus());
         }
 
@@ -105,7 +105,7 @@ public final class ConcordProcess {
     public void assertLog(@Language("RegExp") String pattern) throws ApiException {
         byte[] ab = getLog();
         String msg = "Expected: " + pattern + "\nGot: " + new String(ab);
-        assertEquals(msg, 1, grep(pattern, ab).size());
+        assertEquals(msg, 1, Utils.grep(pattern, ab).size());
     }
 
     /**
@@ -114,7 +114,7 @@ public final class ConcordProcess {
     public void assertNoLog(@Language("RegExp") String pattern) throws ApiException {
         byte[] ab = getLog();
         String msg = "Expected: " + pattern + "\nGot: " + new String(ab);
-        assertEquals(msg, 0, grep(pattern, ab).size());
+        assertEquals(msg, 0, Utils.grep(pattern, ab).size());
     }
 
     /**
@@ -122,7 +122,7 @@ public final class ConcordProcess {
      */
     public void assertLogAtLeast(@Language("RegExp") String pattern, int times) throws ApiException {
         byte[] ab = getLog();
-        assertTrue(times <= grep(pattern, ab).size());
+        assertTrue(times <= Utils.grep(pattern, ab).size());
     }
 
     /**
@@ -170,7 +170,7 @@ public final class ConcordProcess {
     /**
      * Returns a list of subprocesses tagged with any of the specified values.
      */
-    public List<ProcessEntry> subprocesses(String ... tags) throws ApiException {
+    public List<ProcessEntry> subprocesses(String... tags) throws ApiException {
         ProcessApi processApi = new ProcessApi(client);
         return processApi.listSubprocesses(instanceId, tags == null ? null : Arrays.asList(tags));
     }
@@ -201,37 +201,6 @@ public final class ConcordProcess {
         return client.<byte[]>execute(c, t).getData();
     }
 
-    private static boolean isSame(StatusEnum status, StatusEnum first, StatusEnum... more) {
-        if (status == first) {
-            return true;
-        }
-
-        if (more != null) {
-            for (StatusEnum s : more) {
-                if (status == s) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    private static List<String> grep(String pattern, byte[] ab) {
-        List<String> result = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(ab)))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.matches(pattern)) {
-                    result.add(line);
-                }
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return result;
-    }
-
     private static ProcessEntry waitForStatus(ProcessSupplier processSupplier, StatusEnum status, StatusEnum... more) throws ApiException {
         int retries = 10;
 
@@ -243,7 +212,7 @@ public final class ConcordProcess {
                         return pe;
                     }
 
-                    if (isSame(pe.getStatus(), status, more)) {
+                    if (Utils.isSame(pe.getStatus(), status, more)) {
                         return pe;
                     }
                 }
