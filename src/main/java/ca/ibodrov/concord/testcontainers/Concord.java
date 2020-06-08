@@ -22,9 +22,6 @@ package ca.ibodrov.concord.testcontainers;
 
 import com.walmartlabs.concord.ApiClient;
 import com.walmartlabs.concord.client.ConcordApiClient;
-import org.junit.rules.TestRule;
-import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
 import org.testcontainers.images.ImagePullPolicy;
 import org.testcontainers.images.PullPolicy;
 
@@ -32,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings("unused")
-public class Concord implements TestRule {
+public class Concord {
 
     private boolean startAgent = true;
     private boolean streamAgentLogs;
@@ -62,6 +59,12 @@ public class Concord implements TestRule {
 
     public ConcordEnvironment environment() {
         return environment;
+    }
+
+    public ConcordEnvironment initEnvironment()
+    {
+        this.environment = createEnvironment();
+        return this.environment;
     }
 
     /**
@@ -384,24 +387,6 @@ public class Concord implements TestRule {
      */
     public Projects projects() {
         return new Projects(apiClient());
-    }
-
-    @Override
-    public Statement apply(Statement base, Description description) {
-        return new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                try (ConcordEnvironment env = createEnvironment()) {
-                    env.start();
-                    Concord.this.environment = env;
-                    try {
-                        base.evaluate();
-                    } finally {
-                        ProcessLogStreamers.stop();
-                    }
-                }
-            }
-        };
     }
 
     private ConcordEnvironment createEnvironment() {

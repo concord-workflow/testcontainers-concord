@@ -20,11 +20,18 @@ package ca.ibodrov.concord.testcontainers;
  * =====
  */
 
-import org.testcontainers.lifecycle.Startable;
-
-public interface ConcordEnvironment extends Startable {
+public interface ConcordEnvironment extends AutoCloseable {
 
     int apiPort();
 
     String apiToken();
+
+    void start();
+
+    void stop();
+
+    @Override
+    default void close() {
+        stop();
+    }
 }

@@ -32,13 +32,13 @@ import static org.junit.Assert.assertNotNull;
 public class DockerTest {
 
     @ClassRule
-    public static Concord concord = new Concord()
+    public static ConcordRule concordRule = new ConcordRule(new Concord()
             .mode(Concord.Mode.DOCKER)
-            .useLocalMavenRepository(true);
+            .useLocalMavenRepository(true));
 
     @Test
     public void testApiToken() {
-        assertNotNull(concord.environment().apiToken());
+        assertNotNull(concordRule.concord().environment().apiToken());
     }
 
     @Test
@@ -50,7 +50,7 @@ public class DockerTest {
                 "  default:\n" +
                 "    - log: Hello, ${name}!";
 
-        ConcordProcess p = concord.processes()
+        ConcordProcess p = concordRule.concord().processes()
                 .start(new Payload()
                         .concordYml(yml)
                         .arg("name", nameValue));
@@ -68,17 +68,17 @@ public class DockerTest {
                 "  default:\n" +
                 "    - log: Hello, Concord!";
 
-        ConcordProcess p1 = concord.processes()
+        ConcordProcess p1 = concordRule.concord().processes()
                 .start(new Payload()
                         .concordYml(yml)
                         .tag(tag));
 
         p1.waitForStatus(ProcessEntry.StatusEnum.FINISHED);
 
-        ConcordProcess p2 = concord.processes().get(p1.instanceId());
+        ConcordProcess p2 = concordRule.concord().processes().get(p1.instanceId());
         p2.assertLog(".*Hello, Concord!.*");
 
-        List<ProcessEntry> l = concord.processes().list(ProcessListQuery.builder()
+        List<ProcessEntry> l = concordRule.concord().processes().list(ProcessListQuery.builder()
                 .addTags(tag)
                 .build());
         assertEquals(1, l.size());
@@ -93,12 +93,12 @@ public class DockerTest {
                 "    - log: ${crypto.exportAsString('Default', 'testSecret', null)}";
 
         String mySecretValue = "Hello, I'm a secret value!";
-        concord.secrets().createSecret(NewSecretQuery.builder()
+        concordRule.concord().secrets().createSecret(NewSecretQuery.builder()
                 .org("Default")
                 .name("testSecret")
                 .build(), mySecretValue.getBytes());
 
-        ConcordProcess p = concord.processes().start(new Payload().concordYml(yml));
+        ConcordProcess p = concordRule.concord().processes().start(new Payload().concordYml(yml));
 
         p.waitForStatus(ProcessEntry.StatusEnum.FINISHED);
         p.assertLog(".*" + mySecretValue + ".*");
@@ -111,7 +111,7 @@ public class DockerTest {
                 "  default:\n" +
                 "    - log: Hello, Concord!";
 
-        ConcordProcess p = concord.processes()
+        ConcordProcess p = concordRule.concord().processes()
                 .create()
                 .streamLogs(true)
                 .payload(new Payload().concordYml(yml))
