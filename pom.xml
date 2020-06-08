@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
@@ -8,12 +7,12 @@
         <groupId>io.takari</groupId>
         <artifactId>takari</artifactId>
         <version>27</version>
-        <relativePath/>
+        <relativePath />
     </parent>
 
     <groupId>ca.ibodrov.concord</groupId>
     <artifactId>testcontainers-concord</artifactId>
-    <version>0.0.18-SNAPSHOT</version>
+    <version>0.0.18</version>
     <packaging>takari-jar</packaging>
 
     <name>testcontainers-concord</name>
@@ -234,8 +233,7 @@
                         </goals>
                         <configuration>
                             <transformers>
-                                <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
                             </transformers>
                             <createDependencyReducedPom>true</createDependencyReducedPom>
                             <shadedArtifactAttached>true</shadedArtifactAttached>
@@ -301,6 +299,6 @@
 
     <scm>
         <developerConnection>scm:git:git@github.com:concord-workflow/testcontainers-concord.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>testcontainers-concord-0.0.18</tag>
     </scm>
 </project>
