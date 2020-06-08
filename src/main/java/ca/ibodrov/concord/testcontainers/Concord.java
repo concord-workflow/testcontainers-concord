@@ -61,8 +61,7 @@ public class Concord {
         return environment;
     }
 
-    public ConcordEnvironment initEnvironment()
-    {
+    public ConcordEnvironment initEnvironment() {
         this.environment = createEnvironment();
         return this.environment;
     }

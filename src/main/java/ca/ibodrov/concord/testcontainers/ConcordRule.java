@@ -25,23 +25,20 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 @SuppressWarnings("unused")
-public class ConcordRule
-        implements TestRule {
+public class ConcordRule implements TestRule {
+
     private final Concord concord;
 
-    public ConcordRule(Concord concord)
-    {
+    public ConcordRule(Concord concord) {
         this.concord = concord;
     }
 
-    public Concord concord()
-    {
+    public Concord concord() {
         return concord;
     }
 
     @Override
-    public Statement apply(Statement base, Description description)
-    {
+    public Statement apply(Statement base, Description description) {
         return new Statement() {
             @Override
             public void evaluate() throws Throwable {
