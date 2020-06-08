@@ -27,8 +27,8 @@ import org.junit.Test;
 public class LocalTest {
 
     @ClassRule
-    public static Concord concord = new Concord()
-            .mode(Concord.Mode.LOCAL);
+    public static ConcordRule concordRule = new ConcordRule(new Concord()
+            .mode(Concord.Mode.LOCAL));
 
     @Test
     public void testSimpleFlow() throws Exception {
@@ -39,7 +39,7 @@ public class LocalTest {
                 "  default:\n" +
                 "    - log: Hello, ${name}!";
 
-        ConcordProcess p = concord.processes()
+        ConcordProcess p = concordRule.concord().processes()
                 .start(new Payload()
                         .concordYml(yml)
                         .parameter("arguments.name", nameValue));
