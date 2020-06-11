@@ -66,8 +66,7 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
                 .withNetworkAliases("db")
                 .withNetwork(network);
 
-        String version = opts.version();
-        this.server = new GenericContainer<>(opts.serverImage() + ":" + version)
+        this.server = new GenericContainer<>(opts.serverImage())
                 .dependsOn(db)
                 .withImagePullPolicy(pullPolicy)
                 .withEnv("DB_URL", "jdbc:postgresql://db:5432/postgres")
@@ -95,7 +94,7 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
             server.withLogConsumer(serverLogConsumer);
         }
 
-        this.agent = new GenericContainer<>(opts.agentImage() + ":" + opts.version())
+        this.agent = new GenericContainer<>(opts.agentImage())
                 .dependsOn(server)
                 .withImagePullPolicy(pullPolicy)
                 .withNetwork(network)
@@ -186,7 +185,7 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
         ImagePullPolicy p = opts.pullPolicy();
 
         if (p == null) {
-            if ("latest".equals(opts.version())) {
+            if (requiresAlwaysPull(opts.serverImage()) || requiresAlwaysPull(opts.agentImage())) {
                 return PullPolicy.alwaysPull();
             } else {
                 return PullPolicy.defaultPolicy();
@@ -194,6 +193,10 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
         }
 
         return p;
+    }
+
+    private static boolean requiresAlwaysPull(String image) {
+        return image.contains(":latest") || image.indexOf(":") < 0;
     }
 
     private static String getApiToken(String s) {

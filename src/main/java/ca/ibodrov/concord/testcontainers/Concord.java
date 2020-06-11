@@ -51,7 +51,6 @@ public class Concord {
     private String pathToRunnerV2;
     private String serverClassesDirectory;
     private String serverExtDirectory;
-    private String version = "latest";
 
     private List<ContainerListener> containerListeners;
 
@@ -125,18 +124,6 @@ public class Concord {
      */
     public Concord mode(Mode mode) {
         this.mode = mode;
-        return this;
-    }
-
-    public String version() {
-        return version;
-    }
-
-    /**
-     * The version of Concord to be used for testing.
-     */
-    public Concord version(String version) {
-        this.version = version;
         return this;
     }
 
