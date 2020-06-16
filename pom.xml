@@ -236,9 +236,7 @@
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
                             </transformers>
                             <createDependencyReducedPom>true</createDependencyReducedPom>
-                            <shadedArtifactAttached>true</shadedArtifactAttached>
-                            <dependencyReducedPomLocation>${project.build.directory}/dependency-reduced-pom.xml
-                            </dependencyReducedPomLocation>
+                            <dependencyReducedPomLocation>${project.build.directory}/dependency-reduced-pom.xml</dependencyReducedPomLocation>
                             <filters>
                                 <filter>
                                     <artifact>*:*</artifact>
