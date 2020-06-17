@@ -3,9 +3,17 @@
 Provides a JUnit 4 test rule to run Concord containers using
 [Testcontainers](https://www.testcontainers.org/).
 
-Currently it requires the latest Concord version from `master`. 
+Currently, it requires the latest Concord version from `master`. 
 
 ## Usage
+
+```xml
+<dependency>
+    <groupId>ca.ibodrov.concord</groupId>
+    <artifactId>testcontainers-concord-junit4</artifactId>
+    <version>...</version>
+</dependency>
+```
 
 ```java
 public class MyTest {
@@ -19,7 +27,7 @@ public class MyTest {
 }
 ```
 
-By default the the DB, the Server and the Agent are started using Docker containers.
+By default, the DB, the Server and the Agent are started using Docker containers.
 See below for other options.
 
 See [test cases](./src/test/java/ca/ibodrov/concord/testcontainers/RuleTest.java) for

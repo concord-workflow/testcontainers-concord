@@ -1,4 +1,4 @@
-package ca.ibodrov.concord.testcontainers;
+package ca.ibodrov.concord.testcontainers.junit4;
 
 /*-
  * *****
@@ -20,15 +20,19 @@ package ca.ibodrov.concord.testcontainers;
  * =====
  */
 
+import ca.ibodrov.concord.testcontainers.Concord;
+import ca.ibodrov.concord.testcontainers.ConcordProcess;
+import ca.ibodrov.concord.testcontainers.Payload;
 import com.walmartlabs.concord.client.ProcessEntry;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-public class LocalTest {
+public class ConcordRuleTest {
 
     @ClassRule
-    public static ConcordRule concordRule = new ConcordRule(new Concord()
-            .mode(Concord.Mode.LOCAL));
+    public static ConcordRule concord = new ConcordRule()
+            .mode(Concord.Mode.DOCKER)
+            .useLocalMavenRepository(true);
 
     @Test
     public void testSimpleFlow() throws Exception {
@@ -39,10 +43,10 @@ public class LocalTest {
                 "  default:\n" +
                 "    - log: Hello, ${name}!";
 
-        ConcordProcess p = concordRule.concord().processes()
+        ConcordProcess p = concord.processes()
                 .start(new Payload()
                         .concordYml(yml)
-                        .parameter("arguments.name", nameValue));
+                        .arg("name", nameValue));
 
         p.waitForStatus(ProcessEntry.StatusEnum.FINISHED);
         p.assertLog(".*Hello, " + nameValue + ".*");

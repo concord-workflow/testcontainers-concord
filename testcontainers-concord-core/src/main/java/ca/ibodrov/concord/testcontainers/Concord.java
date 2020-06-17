@@ -28,8 +28,8 @@ import org.testcontainers.images.PullPolicy;
 import java.util.ArrayList;
 import java.util.List;
 
-@SuppressWarnings("unused")
-public class Concord {
+@SuppressWarnings({"unused", "unchecked"})
+public class Concord<T extends Concord<T>> implements AutoCloseable {
 
     private boolean startAgent = true;
     private boolean streamAgentLogs;
@@ -55,6 +55,23 @@ public class Concord {
     private List<ContainerListener> containerListeners;
 
     private ConcordEnvironment environment;
+
+    /**
+     * Starts a Concord instance using the current configuration.
+     */
+    public void start() {
+        initEnvironment();
+        environment.start();
+    }
+
+    /**
+     * Stops the current Concord instance.
+     */
+    @Override
+    public void close() {
+        environment.stop();
+        ProcessLogStreamers.stop();
+    }
 
     public ConcordEnvironment environment() {
         return environment;
@@ -92,12 +109,12 @@ public class Concord {
     }
 
     /**
-     * Sets the base URL of a remote Concord API server.
+     * Sets the base URL of a remote T API server.
      * Required for {@link Mode#REMOTE}.
      */
-    public Concord apiBaseUrl(String apiBaseUrl) {
+    public T apiBaseUrl(String apiBaseUrl) {
         this.apiBaseUrl = apiBaseUrl;
-        return this;
+        return (T) this;
     }
 
     public String apiToken() {
@@ -105,12 +122,12 @@ public class Concord {
     }
 
     /**
-     * Sets the default API token to use with a remote Concord API server.
+     * Sets the default API token to use with a remote T API server.
      * Required for {@link Mode#REMOTE}.
      */
-    public Concord apiToken(String apiToken) {
+    public T apiToken(String apiToken) {
         this.apiToken = apiToken;
-        return this;
+        return (T) this;
     }
 
     public Mode mode() {
@@ -122,18 +139,18 @@ public class Concord {
      *
      * @see Mode
      */
-    public Concord mode(Mode mode) {
+    public T mode(Mode mode) {
         this.mode = mode;
-        return this;
+        return (T) this;
     }
 
     public String dbImage() {
         return dbImage;
     }
 
-    public Concord dbImage(String dbImage) {
+    public T dbImage(String dbImage) {
         this.dbImage = dbImage;
-        return this;
+        return (T) this;
     }
 
     public String serverImage() {
@@ -143,9 +160,9 @@ public class Concord {
     /**
      * Server docker image name without version.
      */
-    public Concord serverImage(String image) {
+    public T serverImage(String image) {
         this.serverImage = image;
-        return this;
+        return (T) this;
     }
 
     public String agentImage() {
@@ -155,9 +172,9 @@ public class Concord {
     /**
      * Agent docker image name without version.
      */
-    public Concord agentImage(String image) {
+    public T agentImage(String image) {
         this.agentImage = image;
-        return this;
+        return (T) this;
     }
 
     public String serverExtDirectory() {
@@ -168,9 +185,9 @@ public class Concord {
      * Path to the directory to be mounted as the server's "ext" directory.
      * E.g. to mount 3rd-party server plugins.
      */
-    public Concord serverExtDirectory(String serverExtDirectory) {
+    public T serverExtDirectory(String serverExtDirectory) {
         this.serverExtDirectory = serverExtDirectory;
-        return this;
+        return (T) this;
     }
 
     public String serverClassesDirectory() {
@@ -182,9 +199,9 @@ public class Concord {
      * Useful to test plugins without building any JARs, just by mounting the target/classes
      * directory directly.
      */
-    public Concord serverClassesDirectory(String serverClassesDirectory) {
+    public T serverClassesDirectory(String serverClassesDirectory) {
         this.serverClassesDirectory = serverClassesDirectory;
-        return this;
+        return (T) this;
     }
 
     public String mavenConfigurationPath() {
@@ -195,9 +212,9 @@ public class Concord {
      * Path to {@code mvn.json} to use with the server and agent containers.
      * Doesn't work with {@link Mode#LOCAL} or {@link Mode#REMOTE}.
      */
-    public Concord mavenConfigurationPath(String mavenConfigurationPath) {
+    public T mavenConfigurationPath(String mavenConfigurationPath) {
         this.mavenConfigurationPath = mavenConfigurationPath;
-        return this;
+        return (T) this;
     }
 
     public boolean useLocalMavenRepository() {
@@ -207,9 +224,9 @@ public class Concord {
     /**
      * If {@code true} Maven Central will be used for artifact resolution.
      */
-    public Concord useMavenCentral(boolean useMavenCentral) {
+    public T useMavenCentral(boolean useMavenCentral) {
         this.useMavenCentral = useMavenCentral;
-        return this;
+        return (T) this;
     }
 
     public boolean useMavenCentral() {
@@ -222,9 +239,9 @@ public class Concord {
      * Doesn't work with {@link Mode#LOCAL} or {@link Mode#REMOTE}.
      * Exclusive with {@link #mavenConfigurationPath}
      */
-    public Concord useLocalMavenRepository(boolean useLocalMavenRepository) {
+    public T useLocalMavenRepository(boolean useLocalMavenRepository) {
         this.useLocalMavenRepository = useLocalMavenRepository;
-        return this;
+        return (T) this;
     }
 
     public boolean streamServerLogs() {
@@ -234,9 +251,9 @@ public class Concord {
     /**
      * Stream the server logs to the console.
      */
-    public Concord streamServerLogs(boolean streamServerLogs) {
+    public T streamServerLogs(boolean streamServerLogs) {
         this.streamServerLogs = streamServerLogs;
-        return this;
+        return (T) this;
     }
 
     public boolean streamAgentLogs() {
@@ -246,9 +263,9 @@ public class Concord {
     /**
      * Stream the agent logs to the console.
      */
-    public Concord streamAgentLogs(boolean streamAgentLogs) {
+    public T streamAgentLogs(boolean streamAgentLogs) {
         this.streamAgentLogs = streamAgentLogs;
-        return this;
+        return (T) this;
     }
 
     public String pathToRunnerV1() {
@@ -266,9 +283,9 @@ public class Concord {
      * Typically points to the runner JAR file copied by Maven into
      * the target directory.
      */
-    public Concord pathToRunnerV1(String pathToRunnerV1) {
+    public T pathToRunnerV1(String pathToRunnerV1) {
         this.pathToRunnerV1 = pathToRunnerV1;
-        return this;
+        return (T) this;
     }
 
     /**
@@ -278,9 +295,9 @@ public class Concord {
      * Typically points to the runner JAR file copied by Maven into
      * the target directory.
      */
-    public Concord pathToRunnerV2(String pathToRunnerV2) {
+    public T pathToRunnerV2(String pathToRunnerV2) {
         this.pathToRunnerV2 = pathToRunnerV2;
-        return this;
+        return (T) this;
     }
 
     public boolean startAgent() {
@@ -290,22 +307,22 @@ public class Concord {
     /**
      * Don't start the Agent if {@code false}. Default is {@code true}.
      */
-    public Concord startAgent(boolean startAgent) {
+    public T startAgent(boolean startAgent) {
         this.startAgent = startAgent;
-        return this;
+        return (T) this;
     }
 
     /**
-     * Docker image pull policy. If {@link #version()} is "latest"
+     * Docker image pull policy. If {@link #serverImage()} or {@link #agentImage()} are "latest"
      * {@link PullPolicy#alwaysPull()} is used by default.
      */
     public ImagePullPolicy pullPolicy() {
         return pullPolicy;
     }
 
-    public Concord pullPolicy(ImagePullPolicy pullPolicy) {
+    public T pullPolicy(ImagePullPolicy pullPolicy) {
         this.pullPolicy = pullPolicy;
-        return this;
+        return (T) this;
     }
 
     /**
@@ -339,37 +356,37 @@ public class Concord {
      * Adds a {@link ContainerListener} that can be used to perform
      * additional actions before containers start.
      */
-    public Concord containerListener(ContainerListener listener) {
+    public T containerListener(ContainerListener listener) {
         if (this.containerListeners == null) {
             this.containerListeners = new ArrayList<>();
         }
         this.containerListeners.add(listener);
-        return this;
+        return (T) this;
     }
 
     /**
-     * Utilities to work with Concord processes.
+     * Utilities to work with T processes.
      */
     public Processes processes() {
         return new Processes(apiClient());
     }
 
     /**
-     * Utilities to work with Concord secrets.
+     * Utilities to work with T secrets.
      */
     public Secrets secrets() {
         return new Secrets(apiClient());
     }
 
     /**
-     * Utilities to work with Concord organizations.
+     * Utilities to work with T organizations.
      */
     public Organizations organizations() {
         return new Organizations(apiClient());
     }
 
     /**
-     * Utilities to work with Concord organizations.
+     * Utilities to work with T organizations.
      */
     public Projects projects() {
         return new Projects(apiClient());
@@ -406,7 +423,7 @@ public class Concord {
         DOCKER,
 
         /**
-         * Connect to a remote Concord instance.
+         * Connect to a remote T instance.
          */
         REMOTE
     }

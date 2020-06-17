@@ -56,7 +56,7 @@ public class LocalConcordEnvironment implements ConcordEnvironment {
     private ConcordServer server;
     private Agent agent;
 
-    public LocalConcordEnvironment(Concord opts) {
+    public LocalConcordEnvironment(Concord<?> opts) {
         validate(opts);
 
         this.db = new GenericContainer<>("library/postgres:10")

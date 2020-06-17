@@ -54,7 +54,7 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
 
     private String apiToken;
 
-    public DockerConcordEnvironment(Concord opts) {
+    public DockerConcordEnvironment(Concord<?> opts) {
         validate(opts);
 
         ImagePullPolicy pullPolicy = pullPolicy(opts);

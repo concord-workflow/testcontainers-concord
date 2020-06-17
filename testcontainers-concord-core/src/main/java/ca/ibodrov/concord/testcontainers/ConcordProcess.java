@@ -35,9 +35,6 @@ import java.io.File;
 import java.lang.reflect.Type;
 import java.util.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 public final class ConcordProcess {
 
     private static final Logger log = LoggerFactory.getLogger(ConcordProcess.class);
@@ -122,7 +119,8 @@ public final class ConcordProcess {
      */
     public void assertLogAtLeast(@Language("RegExp") String pattern, int times) throws ApiException {
         byte[] ab = getLog();
-        assertTrue(times <= Utils.grep(pattern, ab).size());
+        String msg = "Expected " + pattern + " at least " + times + " time(s)\nGot: " + new String(ab);
+        assertTrue(msg, times <= Utils.grep(pattern, ab).size());
     }
 
     /**
@@ -231,6 +229,26 @@ public final class ConcordProcess {
                 Thread.currentThread().interrupt();
             }
         }
+    }
+
+    private static void assertEquals(String msg, Object expected, Object actual) {
+        if (expected == null && actual == null) {
+            return;
+        }
+
+        if (expected != null && expected.equals(actual)) {
+            return;
+        }
+
+        throw new IllegalStateException(msg);
+    }
+
+    private static void assertTrue(String msg, boolean value) {
+        if (value) {
+            return;
+        }
+
+        throw new IllegalStateException(msg);
     }
 
     private interface ProcessSupplier {
