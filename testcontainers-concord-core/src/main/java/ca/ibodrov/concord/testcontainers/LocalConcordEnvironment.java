@@ -82,6 +82,11 @@ public class LocalConcordEnvironment implements ConcordEnvironment {
         return apiToken;
     }
 
+    public ConcordServer server()
+    {
+        return server;
+    }
+
     @Override
     public void start() {
         apiPort = Utils.reservePort(8001);

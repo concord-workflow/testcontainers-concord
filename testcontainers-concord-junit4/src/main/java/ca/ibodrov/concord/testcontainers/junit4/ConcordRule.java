@@ -20,29 +20,6 @@ package ca.ibodrov.concord.testcontainers.junit4;
  * =====
  */
 
-import ca.ibodrov.concord.testcontainers.Concord;
-import ca.ibodrov.concord.testcontainers.ConcordEnvironment;
-import ca.ibodrov.concord.testcontainers.ProcessLogStreamers;
-import org.junit.rules.TestRule;
-import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
+public class ConcordRule extends ConcordRuleBase<ConcordRule> {
 
-public class ConcordRule extends Concord<ConcordRule> implements TestRule {
-
-    @Override
-    public Statement apply(Statement base, Description description) {
-        return new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                try (ConcordEnvironment env = initEnvironment()) {
-                    env.start();
-                    try {
-                        base.evaluate();
-                    } finally {
-                        ProcessLogStreamers.stop();
-                    }
-                }
-            }
-        };
-    }
 }

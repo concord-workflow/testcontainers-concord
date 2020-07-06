@@ -22,6 +22,7 @@ package ca.ibodrov.concord.testcontainers;
 
 import com.walmartlabs.concord.ApiClient;
 import com.walmartlabs.concord.client.ConcordApiClient;
+import org.jetbrains.annotations.NotNull;
 import org.testcontainers.images.ImagePullPolicy;
 import org.testcontainers.images.PullPolicy;
 
@@ -395,18 +396,36 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
     private ConcordEnvironment createEnvironment() {
         switch (mode) {
             case LOCAL: {
-                return new LocalConcordEnvironment(this);
+                return createLocalConcordEnvironment();
             }
             case DOCKER: {
-                return new DockerConcordEnvironment(this);
+                return createDockerConcordEnvironment();
             }
             case REMOTE: {
-                return new RemoteConcordEnvironment(this);
+                return createRemoteConcordEnvironment();
             }
             default: {
                 throw new IllegalArgumentException("Unsupported mode: " + mode);
             }
         }
+    }
+
+    @NotNull
+    protected RemoteConcordEnvironment createRemoteConcordEnvironment()
+    {
+        return new RemoteConcordEnvironment(this);
+    }
+
+    @NotNull
+    protected DockerConcordEnvironment createDockerConcordEnvironment()
+    {
+        return new DockerConcordEnvironment(this);
+    }
+
+    @NotNull
+    protected LocalConcordEnvironment createLocalConcordEnvironment()
+    {
+        return new LocalConcordEnvironment(this);
     }
 
     public enum Mode {
