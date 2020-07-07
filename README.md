@@ -3,8 +3,6 @@
 Provides a JUnit 4 test rule to run Concord containers using
 [Testcontainers](https://www.testcontainers.org/).
 
-Currently, it requires the latest Concord version from `master`. 
-
 ## Usage
 
 ```xml
