@@ -82,8 +82,7 @@ public class LocalConcordEnvironment implements ConcordEnvironment {
         return apiToken;
     }
 
-    public ConcordServer server()
-    {
+    public ConcordServer server() {
         return server;
     }
 

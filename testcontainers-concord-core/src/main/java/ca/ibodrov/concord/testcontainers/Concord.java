@@ -411,20 +411,17 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
     }
 
     @NotNull
-    protected RemoteConcordEnvironment createRemoteConcordEnvironment()
-    {
+    protected RemoteConcordEnvironment createRemoteConcordEnvironment() {
         return new RemoteConcordEnvironment(this);
     }
 
     @NotNull
-    protected DockerConcordEnvironment createDockerConcordEnvironment()
-    {
+    protected DockerConcordEnvironment createDockerConcordEnvironment() {
         return new DockerConcordEnvironment(this);
     }
 
     @NotNull
-    protected LocalConcordEnvironment createLocalConcordEnvironment()
-    {
+    protected LocalConcordEnvironment createLocalConcordEnvironment() {
         return new LocalConcordEnvironment(this);
     }
 
