@@ -48,7 +48,7 @@ public class ProcessLogStreamers {
     }
 
     private void doStop() {
-        executor.shutdown();
+        executor.shutdownNow();
         try {
             executor.awaitTermination(30, TimeUnit.SECONDS);
         } catch (InterruptedException e) {

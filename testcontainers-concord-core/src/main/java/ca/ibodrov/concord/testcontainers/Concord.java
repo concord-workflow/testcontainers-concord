@@ -25,9 +25,12 @@ import com.walmartlabs.concord.client.ConcordApiClient;
 import org.jetbrains.annotations.NotNull;
 import org.testcontainers.images.ImagePullPolicy;
 import org.testcontainers.images.PullPolicy;
+import org.testcontainers.lifecycle.Startable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.function.Supplier;
 
 @SuppressWarnings({"unused", "unchecked"})
 public class Concord<T extends Concord<T>> implements AutoCloseable {
@@ -52,6 +55,8 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
     private String pathToRunnerV2;
     private String serverClassesDirectory;
     private String serverExtDirectory;
+    private Supplier<String> extraConfigurationSupplier;
+    private List<Startable> dependsOn;
 
     private List<ContainerListener> containerListeners;
 
@@ -191,6 +196,21 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
         return (T) this;
     }
 
+    public Supplier<String> extraConfigurationSupplier() {
+        return extraConfigurationSupplier;
+    }
+
+    /**
+     * Additional configuration parameters to add to the server's and
+     * the agent's configuration files.
+     * The provided {@link Supplier} called before the containers start.
+     * Only for {@link Mode#LOCAL}.
+     */
+    public T extraConfigurationSupplier(Supplier<String> extraConfigurationSupplier) {
+        this.extraConfigurationSupplier = extraConfigurationSupplier;
+        return (T) this;
+    }
+
     public String serverClassesDirectory() {
         return serverClassesDirectory;
     }
@@ -323,6 +343,15 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
 
     public T pullPolicy(ImagePullPolicy pullPolicy) {
         this.pullPolicy = pullPolicy;
+        return (T) this;
+    }
+
+    public List<Startable> dependsOn() {
+        return this.dependsOn;
+    }
+
+    public T dependsOn(Startable... dependsOn) {
+        this.dependsOn = Arrays.asList(dependsOn);
         return (T) this;
     }
 

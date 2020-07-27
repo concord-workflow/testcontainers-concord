@@ -30,6 +30,7 @@ import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.ImagePullPolicy;
 import org.testcontainers.images.PullPolicy;
+import org.testcontainers.lifecycle.Startable;
 import org.testcontainers.utility.MountableFile;
 
 import java.io.IOException;
@@ -125,6 +126,13 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
             String cfg = createMavenConfigurationFile(opts).toAbsolutePath().toString();
             mountMavenConfigurationFile(server, cfg);
             mountMavenConfigurationFile(agent, cfg);
+        }
+
+        List<Startable> dependsOn = opts.dependsOn();
+        if (dependsOn != null && !dependsOn.isEmpty()) {
+            this.db.dependsOn(dependsOn);
+            this.server.dependsOn(dependsOn);
+            this.agent.dependsOn(dependsOn);
         }
 
         this.startAgent = opts.startAgent();

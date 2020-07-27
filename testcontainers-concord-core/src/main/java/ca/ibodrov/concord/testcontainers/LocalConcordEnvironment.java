@@ -32,6 +32,7 @@ import com.walmartlabs.concord.server.ConcordServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.lifecycle.Startable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -39,7 +40,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Base64;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Supplier;
 
 public class LocalConcordEnvironment implements ConcordEnvironment {
 
@@ -50,6 +54,7 @@ public class LocalConcordEnvironment implements ConcordEnvironment {
     private final String pathToRunnerV1;
     private final String pathToRunnerV2;
     private final boolean startAgent;
+    private final Supplier<String> extraConfigurationSupplier;
 
     private int apiPort;
 
@@ -64,12 +69,21 @@ public class LocalConcordEnvironment implements ConcordEnvironment {
                 .withNetworkAliases("db")
                 .withExposedPorts(5432);
 
+        // in the LOCAL mode there's only one container - the DB
+        // so it's the only thing that can "depend on" anything
+        List<Startable> dependsOn = opts.dependsOn();
+        if (dependsOn != null && !dependsOn.isEmpty()) {
+            db.dependsOn(dependsOn);
+        }
+
         this.apiToken = randomToken();
 
         this.pathToRunnerV1 = opts.pathToRunnerV1();
         this.pathToRunnerV2 = opts.pathToRunnerV2();
 
         this.startAgent = opts.startAgent();
+
+        this.extraConfigurationSupplier = Optional.ofNullable(opts.extraConfigurationSupplier()).orElse(() -> "");
     }
 
     @Override
@@ -150,6 +164,7 @@ public class LocalConcordEnvironment implements ConcordEnvironment {
         Path dst = Files.createTempFile("server", ".dst");
 
         String s = Resources.toString(LocalConcordEnvironment.class.getResource("local/concord.conf"), Charsets.UTF_8);
+        s = s.replaceAll("%%extra%%", extraConfigurationSupplier.get());
         s = s.replaceAll("SERVER_PORT", String.valueOf(apiPort));
         s = s.replaceAll("DB_URL", "jdbc:postgresql://localhost:" + db.getFirstMappedPort() + "/postgres");
         s = s.replaceAll("API_TOKEN", apiToken);
