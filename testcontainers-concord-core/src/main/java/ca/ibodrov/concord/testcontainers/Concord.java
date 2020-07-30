@@ -357,13 +357,17 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
         return (T) this;
     }
 
+    public Path sharedContainerDir() {
+        return sharedContainerDir;
+    }
+
+    /**
+     * Mount the specified directory into the Server and the Agent containers.
+     * Only for {@link Mode#DOCKER}.
+     */
     public T sharedContainerDir(Path sharedContainerDir) {
         this.sharedContainerDir = sharedContainerDir;
         return (T) this;
-    }
-
-    public Path sharedContainerDir() {
-        return sharedContainerDir;
     }
 
     /**
