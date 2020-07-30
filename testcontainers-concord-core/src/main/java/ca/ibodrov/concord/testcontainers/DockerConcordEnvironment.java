@@ -81,6 +81,10 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
             server.withCopyFileToContainer(MountableFile.forHostPath(serverExtDirectory), "/opt/concord/server/ext");
         }
 
+        if (opts.sharedContainerDir() != null) {
+            server.withFileSystemBind(opts.sharedContainerDir().toString(), opts.sharedContainerDir().toString());
+        }
+
         String serverClassesDirectory = opts.serverClassesDirectory();
         if (serverClassesDirectory != null) {
             String src = serverClassesDirectory;
@@ -105,6 +109,10 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
         if (opts.streamAgentLogs()) {
             Slf4jLogConsumer serverLogConsumer = new Slf4jLogConsumer(log);
             agent.withLogConsumer(serverLogConsumer);
+        }
+
+        if (opts.sharedContainerDir() != null) {
+            agent.withFileSystemBind(opts.sharedContainerDir().toString(), opts.sharedContainerDir().toString());
         }
 
         String mavenConfigurationPath = opts.mavenConfigurationPath();
