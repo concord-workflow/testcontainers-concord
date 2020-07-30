@@ -27,7 +27,7 @@ import com.walmartlabs.concord.client.ClientUtils;
 import com.walmartlabs.concord.client.ProcessEntry;
 import com.walmartlabs.concord.client.ProcessV2Api;
 import com.walmartlabs.concord.client.StartProcessResponse;
-
+import com.walmartlabs.concord.common.DateTimeUtils;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -96,8 +96,9 @@ public final class Processes {
      */
     public List<ProcessEntry> list(ProcessListQuery query) throws ApiException {
         ProcessV2Api processApi = new ProcessV2Api(client);
-        return processApi.list(null, null, query.projectId(), null, null,
-                null, null, null, query.tags(), null,
-                null, null, null, query.limit(), query.offset());
+        String afterCreatedAt = query.afterCreatedAt() != null ? DateTimeUtils.toIsoString(query.afterCreatedAt()) : null;
+        return processApi.list(query.orgId(), query.orgName(), query.projectId(), query.projectName(), query.repoId(),
+                query.repoName(), afterCreatedAt, null, query.tags(), null,
+                query.initiator(), query.parentInstanceId(), null, query.limit(), query.offset());
     }
 }

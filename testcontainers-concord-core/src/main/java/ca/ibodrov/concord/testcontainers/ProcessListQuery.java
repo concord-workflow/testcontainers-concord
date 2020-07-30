@@ -23,6 +23,7 @@ package ca.ibodrov.concord.testcontainers;
 import org.immutables.value.Value;
 
 import javax.annotation.Nullable;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,7 +31,31 @@ import java.util.UUID;
 public interface ProcessListQuery {
 
     @Nullable
+    UUID orgId();
+
+    @Nullable
+    String orgName();
+
+    @Nullable
     UUID projectId();
+
+    @Nullable
+    String projectName();
+
+    @Nullable
+    UUID repoId();
+
+    @Nullable
+    String repoName();
+
+    @Nullable
+    UUID parentInstanceId();
+
+    @Nullable
+    String initiator();
+
+    @Nullable
+    OffsetDateTime afterCreatedAt();
 
     @Nullable
     List<String> tags();
