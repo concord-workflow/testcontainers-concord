@@ -27,6 +27,7 @@ import org.testcontainers.images.ImagePullPolicy;
 import org.testcontainers.images.PullPolicy;
 import org.testcontainers.lifecycle.Startable;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -57,6 +58,7 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
     private String serverExtDirectory;
     private Supplier<String> extraConfigurationSupplier;
     private List<Startable> dependsOn;
+    private Path sharedContainerDir;
 
     private List<ContainerListener> containerListeners;
 
@@ -353,6 +355,15 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
     public T dependsOn(Startable... dependsOn) {
         this.dependsOn = Arrays.asList(dependsOn);
         return (T) this;
+    }
+
+    public T sharedContainerDir(Path sharedContainerDir) {
+        this.sharedContainerDir = sharedContainerDir;
+        return (T) this;
+    }
+
+    public Path sharedContainerDir() {
+        return sharedContainerDir;
     }
 
     /**
