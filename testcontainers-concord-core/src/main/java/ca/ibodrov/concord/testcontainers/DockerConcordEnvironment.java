@@ -174,15 +174,11 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
 
     @Override
     public void start() {
-        fireBeforeStart(ContainerType.DB);
-        this.db.start();
-
-        fireBeforeStart(ContainerType.SERVER);
-        this.server.start();
+        startContainer(this.db, ContainerType.DB);
+        startContainer(this.server, ContainerType.SERVER);
 
         if (startAgent) {
-            fireBeforeStart(ContainerType.AGENT);
-            this.agent.start();
+            startContainer(this.agent, ContainerType.AGENT);
         }
     }
 
@@ -193,8 +189,22 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
         this.db.stop();
     }
 
+    private void startContainer(GenericContainer<?> c, ContainerType t) {
+        fireBeforeStart(t);
+        c.start();
+        transferFiles(c, t);
+    }
+
     private void fireBeforeStart(ContainerType type) {
         this.containerListeners.forEach(l -> l.beforeStart(type));
+    }
+
+    private void transferFiles(GenericContainer<?> c, ContainerType t) {
+        this.containerListeners.forEach(l ->
+                l.filesToTransfer(t).forEach((key, value) -> {
+                    c.copyFileToContainer(MountableFile.forHostPath(key), value.toString());
+                })
+        );
     }
 
     private static ImagePullPolicy pullPolicy(Concord opts) {
