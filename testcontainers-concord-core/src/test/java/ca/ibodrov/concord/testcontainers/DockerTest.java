@@ -51,7 +51,9 @@ public class DockerTest {
                         // Create test file
                         try {
                             Files.createDirectories(testFile.getParent());
-                            Files.write(testFile, "Hello, Concord!".getBytes(), StandardOpenOption.CREATE);
+                            Files.write(testFile,
+                                "Hello, Concord!".getBytes(),
+                                StandardOpenOption.CREATE);
                         } catch (Exception ex) {
                             throw new RuntimeException("Failed to set up file to be copied to container");
                         }

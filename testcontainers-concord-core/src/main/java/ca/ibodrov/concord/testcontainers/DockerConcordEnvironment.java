@@ -201,9 +201,9 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
 
     private void transferFiles(GenericContainer<?> c, ContainerType t) {
         this.containerListeners.forEach(l ->
-                l.filesToTransfer(t).forEach((key, value) -> {
-                    c.copyFileToContainer(MountableFile.forHostPath(key), value.toString());
-                })
+                l.filesToTransfer(t).forEach((src, dst) -> 
+                    c.copyFileToContainer(MountableFile.forHostPath(src), dst.toString())
+                )
         );
     }
 

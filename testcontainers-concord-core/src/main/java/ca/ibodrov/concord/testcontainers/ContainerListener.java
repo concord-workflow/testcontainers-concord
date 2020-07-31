@@ -29,8 +29,9 @@ public interface ContainerListener {
     void beforeStart(ContainerType type);
 
     /**
-     * @param type
-     * @return a list of files to transfer into the container once it's running
+     * Return a map of source -> destination paths to copy to the container
+     * @param type Type of container to which the files will be copied
+     * @return map of files to transfer into the container once it's running
      */
     default Map<Path, Path> filesToTransfer(ContainerType type) {
         return Collections.emptyMap();
