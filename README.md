@@ -17,7 +17,7 @@ Provides a JUnit 4 test rule to run Concord containers using
 public class MyTest {
 
     @Rule
-    public static ConcordRule concord = new ConcordRule();
+    public ConcordRule concord = new ConcordRule();
 
     public void test() {
         // ...
@@ -40,7 +40,7 @@ You need to provide the API's base URL and the token:
 public class MyTest {
 
     @Rule
-    public static ConcordRule concord = new ConcordRule()
+    public ConcordRule concord = new ConcordRule()
             .mode(Concord.Mode.REMOTE)
             .apiBaseUrl("http://localhost:8001")
             .apiToken("...");
@@ -59,7 +59,7 @@ Local mode starts Concord Server and Concord Agent in the current JVM:
 public class MyTest {
 
     @Rule
-    public static ConcordRule concord = new ConcordRule()
+    public ConcordRule concord = new ConcordRule()
             .mode(Concord.Mode.LOCAL);
 
     public void test() {
