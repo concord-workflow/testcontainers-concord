@@ -23,6 +23,7 @@ package ca.ibodrov.concord.testcontainers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.Container;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.OutputFrame;
@@ -174,11 +175,11 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
 
     @Override
     public void start() {
-        startContainer(this.db, ContainerType.DB);
-        startContainer(this.server, ContainerType.SERVER);
+        startContainer(ContainerType.DB, this.db);
+        startContainer(ContainerType.SERVER, this.server);
 
         if (startAgent) {
-            startContainer(this.agent, ContainerType.AGENT);
+            startContainer(ContainerType.AGENT, this.agent);
         }
     }
 
@@ -189,22 +190,18 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
         this.db.stop();
     }
 
-    private void startContainer(GenericContainer<?> c, ContainerType t) {
+    private void startContainer(ContainerType t, GenericContainer<?> c) {
         fireBeforeStart(t);
         c.start();
-        transferFiles(c, t);
+        fireAfterStart(t, c);
     }
 
     private void fireBeforeStart(ContainerType type) {
         this.containerListeners.forEach(l -> l.beforeStart(type));
     }
 
-    private void transferFiles(GenericContainer<?> c, ContainerType t) {
-        this.containerListeners.forEach(l ->
-                l.filesToTransfer(t).forEach((src, dst) -> 
-                    c.copyFileToContainer(MountableFile.forHostPath(src), dst.toString())
-                )
-        );
+    private void fireAfterStart(ContainerType type, Container<?> container) {
+        this.containerListeners.forEach(l -> l.afterStart(type, container));
     }
 
     private static ImagePullPolicy pullPolicy(Concord opts) {

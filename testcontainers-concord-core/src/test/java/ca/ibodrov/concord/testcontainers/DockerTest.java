@@ -24,11 +24,11 @@ import com.walmartlabs.concord.client.ProcessEntry;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.testcontainers.containers.Container;
+import org.testcontainers.utility.MountableFile;
 
 import java.nio.file.*;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -47,20 +47,21 @@ public class DockerTest {
                     public void beforeStart(ContainerType type) { }
 
                     @Override
-                    public Map<Path, Path> filesToTransfer(ContainerType type) {
-                        // Create test file
+                    public void afterStart(ContainerType type, Container<?> container) {
                         try {
+                            // Create test dir + test file
                             Files.createDirectories(testFile.getParent());
-                            Files.write(testFile,
-                                "Hello, Concord!".getBytes(),
-                                StandardOpenOption.CREATE);
+                            Files.write(testFile, "Hello, Concord!".getBytes(), StandardOpenOption.CREATE);
+
+                            // Copy dir to container
+                            if (type == ContainerType.AGENT) {
+                                container.copyFileToContainer(
+                                        MountableFile.forHostPath(testFile.getParent()),
+                                        Paths.get("/tmp", "testDir").toString());
+                            }
                         } catch (Exception ex) {
                             throw new RuntimeException("Failed to set up file to be copied to container");
                         }
-                        Map<Path, Path> files = new HashMap<>(1);
-                        // copy everything from ./target/testDir to /tmp/testDir
-                        files.put(testFile.getParent(), Paths.get("/tmp", "testDir"));
-                        return files;
                     }
                 });
 

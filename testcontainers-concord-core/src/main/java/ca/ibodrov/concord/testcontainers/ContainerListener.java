@@ -20,20 +20,11 @@ package ca.ibodrov.concord.testcontainers;
  * =====
  */
 
-import java.nio.file.Path;
-import java.util.Collections;
-import java.util.Map;
+import org.testcontainers.containers.Container;
 
 public interface ContainerListener {
 
     void beforeStart(ContainerType type);
 
-    /**
-     * Return a map of source -> destination paths to copy to the container
-     * @param type Type of container to which the files will be copied
-     * @return map of files to transfer into the container once it's running
-     */
-    default Map<Path, Path> filesToTransfer(ContainerType type) {
-        return Collections.emptyMap();
-    }
+    void afterStart(ContainerType type, Container<?> container);
 }
