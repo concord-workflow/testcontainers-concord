@@ -24,7 +24,10 @@ import com.walmartlabs.concord.client.ProcessEntry;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.testcontainers.containers.Container;
+import org.testcontainers.utility.MountableFile;
 
+import java.nio.file.*;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -33,11 +36,34 @@ import static org.junit.Assert.assertNotNull;
 public class DockerTest {
 
     private static Concord<?> concord;
+    private static final Path testFile = Paths.get("target/testDir/testFile.txt");
 
     @BeforeClass
     public static void setUp() {
         Concord<?> c = new Concord<>()
-                .mode(Concord.Mode.DOCKER);
+                .mode(Concord.Mode.DOCKER)
+                .containerListener(new ContainerListener() {
+                    @Override
+                    public void beforeStart(ContainerType type) { }
+
+                    @Override
+                    public void afterStart(ContainerType type, Container<?> container) {
+                        try {
+                            // Create test dir + test file
+                            Files.createDirectories(testFile.getParent());
+                            Files.write(testFile, "Hello, Concord!".getBytes(), StandardOpenOption.CREATE);
+
+                            // Copy dir to container
+                            if (type == ContainerType.AGENT) {
+                                container.copyFileToContainer(
+                                        MountableFile.forHostPath(testFile.getParent()),
+                                        Paths.get("/tmp", "testDir").toString());
+                            }
+                        } catch (Exception ex) {
+                            throw new RuntimeException("Failed to set up file to be copied to container");
+                        }
+                    }
+                });
 
         c.start();
 
@@ -126,6 +152,23 @@ public class DockerTest {
                 "flows: \n" +
                 "  default:\n" +
                 "    - log: Hello, Concord!";
+
+        ConcordProcess p = concord.processes()
+                .create()
+                .streamLogs(true)
+                .payload(new Payload().concordYml(yml))
+                .start();
+
+        p.waitForStatus(ProcessEntry.StatusEnum.FINISHED);
+        p.assertLog(".*Hello, Concord!.*");
+    }
+
+    @Test
+    public void testFilePush() throws Exception {
+        String yml = "" +
+                "flows: \n" +
+                "  default:\n" +
+                "    - log: \"${resource.asString('/tmp/testDir/testFile.txt')}\"";
 
         ConcordProcess p = concord.processes()
                 .create()

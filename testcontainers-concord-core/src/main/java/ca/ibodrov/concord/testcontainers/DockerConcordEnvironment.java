@@ -23,6 +23,7 @@ package ca.ibodrov.concord.testcontainers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.Container;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.OutputFrame;
@@ -174,15 +175,11 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
 
     @Override
     public void start() {
-        fireBeforeStart(ContainerType.DB);
-        this.db.start();
-
-        fireBeforeStart(ContainerType.SERVER);
-        this.server.start();
+        startContainer(ContainerType.DB, this.db);
+        startContainer(ContainerType.SERVER, this.server);
 
         if (startAgent) {
-            fireBeforeStart(ContainerType.AGENT);
-            this.agent.start();
+            startContainer(ContainerType.AGENT, this.agent);
         }
     }
 
@@ -193,8 +190,18 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
         this.db.stop();
     }
 
+    private void startContainer(ContainerType t, GenericContainer<?> c) {
+        fireBeforeStart(t);
+        c.start();
+        fireAfterStart(t, c);
+    }
+
     private void fireBeforeStart(ContainerType type) {
         this.containerListeners.forEach(l -> l.beforeStart(type));
+    }
+
+    private void fireAfterStart(ContainerType type, Container<?> container) {
+        this.containerListeners.forEach(l -> l.afterStart(type, container));
     }
 
     private static ImagePullPolicy pullPolicy(Concord opts) {

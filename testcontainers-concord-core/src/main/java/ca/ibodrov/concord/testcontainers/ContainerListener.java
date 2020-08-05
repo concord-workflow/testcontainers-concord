@@ -20,7 +20,11 @@ package ca.ibodrov.concord.testcontainers;
  * =====
  */
 
+import org.testcontainers.containers.Container;
+
 public interface ContainerListener {
 
     void beforeStart(ContainerType type);
+
+    void afterStart(ContainerType type, Container<?> container);
 }
