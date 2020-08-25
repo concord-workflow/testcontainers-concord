@@ -168,6 +168,7 @@ public class LocalConcordEnvironment implements ConcordEnvironment {
         s = s.replaceAll("SERVER_PORT", String.valueOf(apiPort));
         s = s.replaceAll("DB_URL", "jdbc:postgresql://localhost:" + db.getFirstMappedPort() + "/postgres");
         s = s.replaceAll("API_TOKEN", apiToken);
+        s = s.replaceAll("JAVA_CMD", getJavaCmd());
         if (pathToRunnerV1 != null) {
             s = s.replaceAll("RUNNER_V1_PATH", pathToRunnerV1);
         }
@@ -233,5 +234,11 @@ public class LocalConcordEnvironment implements ConcordEnvironment {
                     "If you're copying the JAR using Maven, make sure you run the build first. " +
                     "Otherwise check the path in Concord#pathToRunnerV1 parameter.");
         }
+    }
+
+    private static String getJavaCmd() {
+        return Paths.get(System.getProperties().getProperty("java.home"), "bin", "java")
+                .toAbsolutePath()
+                .toString();
     }
 }
