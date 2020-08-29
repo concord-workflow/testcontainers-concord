@@ -27,7 +27,10 @@ import org.junit.Test;
 import org.testcontainers.containers.Container;
 import org.testcontainers.utility.MountableFile;
 
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -42,6 +45,7 @@ public class DockerTest {
     public static void setUp() {
         Concord<?> c = new Concord<>()
                 .mode(Concord.Mode.DOCKER)
+                .pullPolicy(__ -> false)
                 .containerListener(new ContainerListener() {
                     @Override
                     public void beforeStart(ContainerType type) { }

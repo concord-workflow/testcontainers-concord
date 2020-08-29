@@ -206,7 +206,7 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
      * Additional configuration parameters to add to the server's and
      * the agent's configuration files.
      * The provided {@link Supplier} called before the containers start.
-     * Only for {@link Mode#LOCAL}.
+     * Only for {@link Mode#LOCAL} and {@link Mode#DOCKER}.
      */
     public T extraConfigurationSupplier(Supplier<String> extraConfigurationSupplier) {
         this.extraConfigurationSupplier = extraConfigurationSupplier;

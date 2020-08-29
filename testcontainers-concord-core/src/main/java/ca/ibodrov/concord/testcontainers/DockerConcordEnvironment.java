@@ -21,6 +21,8 @@ package ca.ibodrov.concord.testcontainers;
  */
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Charsets;
+import com.google.common.io.Resources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.Container;
@@ -41,10 +43,13 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.*;
+import java.util.function.Supplier;
 
 public class DockerConcordEnvironment implements ConcordEnvironment {
 
     private static final Logger log = LoggerFactory.getLogger(DockerConcordEnvironment.class);
+
+    private static final String CONCORD_CFG_FILE = "/opt/concord/concord.conf";
 
     private final GenericContainer<?> db;
     private final GenericContainer<?> server;
@@ -59,6 +64,9 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
     public DockerConcordEnvironment(Concord<?> opts) {
         validate(opts);
 
+        Path configFile = prepareConfigurationFile(opts.extraConfigurationSupplier());
+        log.info("Using CONCORD_CFG_FILE={}", configFile);
+
         ImagePullPolicy pullPolicy = pullPolicy(opts);
 
         Network network = Network.newNetwork();
@@ -72,6 +80,8 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
                 .dependsOn(db)
                 .withImagePullPolicy(pullPolicy)
                 .withEnv("DB_URL", "jdbc:postgresql://db:5432/postgres")
+                .withEnv("CONCORD_CFG_FILE", CONCORD_CFG_FILE)
+                .withCopyFileToContainer(MountableFile.forHostPath(configFile, 0644), CONCORD_CFG_FILE)
                 .withNetworkAliases("server")
                 .withNetwork(network)
                 .withExposedPorts(8001)
@@ -105,7 +115,9 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
                 .withImagePullPolicy(pullPolicy)
                 .withNetwork(network)
                 .withEnv("SERVER_API_BASE_URL", "http://server:8001")
-                .withEnv("SERVER_WEBSOCKET_URL", "ws://server:8001/websocket");
+                .withEnv("SERVER_WEBSOCKET_URL", "ws://server:8001/websocket")
+                .withEnv("CONCORD_CFG_FILE", CONCORD_CFG_FILE)
+                .withCopyFileToContainer(MountableFile.forHostPath(configFile, 0644), CONCORD_CFG_FILE);
 
         if (opts.streamAgentLogs()) {
             Slf4jLogConsumer serverLogConsumer = new Slf4jLogConsumer(log);
@@ -188,6 +200,18 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
         this.agent.stop();
         this.server.stop();
         this.db.stop();
+    }
+
+    private Path prepareConfigurationFile(Supplier<String> extraConfigurationSupplier) {
+        try {
+            Path dst = Files.createTempFile("server", ".dst");
+            String s = Resources.toString(DockerConcordEnvironment.class.getResource("docker/concord.conf"), Charsets.UTF_8);
+            s = s.replaceAll("%%extra%%", extraConfigurationSupplier != null ? extraConfigurationSupplier.get() : "");
+            Files.write(dst, s.getBytes(), StandardOpenOption.TRUNCATE_EXISTING);
+            return dst.toAbsolutePath();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void startContainer(ContainerType t, GenericContainer<?> c) {

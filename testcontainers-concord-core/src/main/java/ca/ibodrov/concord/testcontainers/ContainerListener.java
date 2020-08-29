@@ -24,7 +24,9 @@ import org.testcontainers.containers.Container;
 
 public interface ContainerListener {
 
-    void beforeStart(ContainerType type);
+    default void beforeStart(ContainerType type) {
+    }
 
-    void afterStart(ContainerType type, Container<?> container);
+    default void afterStart(ContainerType type, Container<?> container) {
+    }
 }
