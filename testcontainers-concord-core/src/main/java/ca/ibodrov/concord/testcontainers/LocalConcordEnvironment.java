@@ -104,13 +104,7 @@ public class LocalConcordEnvironment implements ConcordEnvironment {
     public void start() {
         apiPort = Utils.reservePort(8001);
 
-        if (pathToRunnerV1 != null) {
-            assertRunnerJar(pathToRunnerV1);
-        }
-
-        if (pathToRunnerV2 != null) {
-            assertRunnerJar(pathToRunnerV2);
-        }
+        assertRunnerJar(startAgent, pathToRunnerV1, pathToRunnerV2);
 
         this.db.start();
 
@@ -227,12 +221,18 @@ public class LocalConcordEnvironment implements ConcordEnvironment {
         }
     }
 
-    private static void assertRunnerJar(String path) {
-        Path p = Paths.get(path);
-        if (!Files.exists(p)) {
-            throw new IllegalStateException("Runner JAR not found: " + path + ". " +
-                    "If you're copying the JAR using Maven, make sure you run the build first. " +
-                    "Otherwise check the path in Concord#pathToRunnerV1 parameter.");
+    private static void assertRunnerJar(boolean startAgent, String pathToRunnerV1, String pathToRunnerV2) {
+        if (!startAgent) {
+            return;
+        }
+
+        boolean v1Exists = pathToRunnerV1 != null && Files.exists(Paths.get(pathToRunnerV1));
+        boolean v2Exists = pathToRunnerV2 != null && Files.exists(Paths.get(pathToRunnerV2));
+
+        if (!v1Exists && !v2Exists) {
+            throw new IllegalStateException("The agent running in the LOCAL mode requires either" +
+                    "a path to runner-v1 or runner-v2 (or both) specified. The specified paths must exist. " +
+                    "If you don't care about running actual Concord processes, disable the agent with Concord#startAgent(false).");
         }
     }
 
