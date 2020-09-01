@@ -36,8 +36,12 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 public final class Utils {
+
+    private static final char[] RANDOM_CHARS = "abcdef0123456789".toCharArray();
 
     public static byte[] archive(URI uri) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -103,6 +107,23 @@ public final class Utils {
             throw new RuntimeException(e);
         }
         return result;
+    }
+
+    public static String randomString() {
+        StringBuilder b = new StringBuilder();
+        b.append(System.currentTimeMillis()).append("_");
+
+        Random rng = ThreadLocalRandom.current();
+        for (int i = 0; i < 6; i++) {
+            int n = rng.nextInt(RANDOM_CHARS.length);
+            b.append(RANDOM_CHARS[n]);
+        }
+
+        return b.toString();
+    }
+
+    public static String randomPwd() {
+        return "pwd_" + randomString() + "A!";
     }
 
     private Utils() {
