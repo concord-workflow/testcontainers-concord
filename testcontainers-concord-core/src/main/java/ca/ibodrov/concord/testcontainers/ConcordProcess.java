@@ -132,6 +132,22 @@ public final class ConcordProcess {
     }
 
     /**
+     * Returns the list of current checkpoints.
+     */
+    public List<ProcessCheckpointEntry> checkpoints() throws ApiException {
+        CheckpointApi checkpointApi = new CheckpointApi(client);
+        return checkpointApi.list(instanceId);
+    }
+
+    /**
+     * Restores the process from the specified checkpoint.
+     */
+    public void restoreCheckpoint(UUID checkpointId) throws ApiException {
+        CheckpointApi checkpointApi = new CheckpointApi(client);
+        checkpointApi.restore(instanceId, new RestoreCheckpointRequest().setId(checkpointId));
+    }
+
+    /**
      * Submits a form.
      */
     public FormSubmitResponse submitForm(String formName, Map<String, Object> data) throws ApiException {
