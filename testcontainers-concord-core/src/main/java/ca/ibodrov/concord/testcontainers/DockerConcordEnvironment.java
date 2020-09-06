@@ -23,8 +23,10 @@ package ca.ibodrov.concord.testcontainers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
+import com.walmartlabs.concord.common.Posix;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.Container;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
@@ -64,7 +66,8 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
     public DockerConcordEnvironment(Concord<?> opts) {
         validate(opts);
 
-        Path configFile = prepareConfigurationFile(opts.extraConfigurationSupplier());
+        Path persistentWorkDir = opts.persistentWorkDir();
+        Path configFile = prepareConfigurationFile(persistentWorkDir, opts.extraConfigurationSupplier());
         log.info("Using CONCORD_CFG_FILE={}", configFile);
 
         ImagePullPolicy pullPolicy = pullPolicy(opts);
@@ -151,12 +154,22 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
 
         List<Startable> dependsOn = opts.dependsOn();
         if (dependsOn != null && !dependsOn.isEmpty()) {
-            this.db.dependsOn(dependsOn);
-            this.server.dependsOn(dependsOn);
-            this.agent.dependsOn(dependsOn);
+            db.dependsOn(dependsOn);
+            server.dependsOn(dependsOn);
+            agent.dependsOn(dependsOn);
         }
 
         this.startAgent = opts.startAgent();
+
+        if (persistentWorkDir != null) {
+            try {
+                Files.setPosixFilePermissions(persistentWorkDir, Posix.posix(0777));
+            } catch (IOException e) {
+                throw new RuntimeException("Can't set persistentWorkDir permissions: " + persistentWorkDir, e);
+            }
+            String path = persistentWorkDir.toAbsolutePath().toString();
+            this.agent.addFileSystemBind(path, path, BindMode.READ_WRITE);
+        }
 
         this.containerListeners = opts.containerListeners() != null ? new ArrayList<>(opts.containerListeners()) : Collections.emptyList();
     }
@@ -202,11 +215,12 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
         this.db.stop();
     }
 
-    private Path prepareConfigurationFile(Supplier<String> extraConfigurationSupplier) {
+    private static Path prepareConfigurationFile(Path persistentWorkDir, Supplier<String> extraConfigurationSupplier) {
         try {
             Path dst = Files.createTempFile("server", ".dst");
             String s = Resources.toString(DockerConcordEnvironment.class.getResource("docker/concord.conf"), Charsets.UTF_8);
-            s = s.replaceAll("%%extra%%", extraConfigurationSupplier != null ? extraConfigurationSupplier.get() : "");
+            s = s.replace("%%persistentWorkDir%%", persistentWorkDir != null ? persistentWorkDir.toString() : "");
+            s = s.replace("%%extra%%", extraConfigurationSupplier != null ? extraConfigurationSupplier.get() : "");
             Files.write(dst, s.getBytes(), StandardOpenOption.TRUNCATE_EXISTING);
             return dst.toAbsolutePath();
         } catch (IOException e) {
@@ -259,7 +273,7 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
         throw new IllegalArgumentException("Can't find the API token in logs");
     }
 
-    private static void validate(Concord opts) {
+    private static void validate(Concord<?> opts) {
         if (opts.apiToken() != null) {
             log.warn("Can't specify 'apiToken' value when using Mode.DOCKER");
         }
@@ -267,9 +281,14 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
         if ((opts.useMavenCentral() || opts.useLocalMavenRepository()) && opts.mavenConfigurationPath() != null) {
             log.warn("The 'mavenConfigurationPath' option is mutually exclusive with 'useLocalMavenRepository' or 'useMavenCentral'.");
         }
+
+        Path persistentWorkDir = opts.persistentWorkDir();
+        if (persistentWorkDir != null && !Files.exists(persistentWorkDir)) {
+            throw new IllegalStateException("The specified 'persistentWorkDir' doesn't exist: " + persistentWorkDir);
+        }
     }
 
-    private static Path createMavenConfigurationFile(Concord opts) {
+    private static Path createMavenConfigurationFile(Concord<?> opts) {
         List<Map<String, Object>> repositories = new ArrayList<>();
 
         if (opts.useLocalMavenRepository()) {

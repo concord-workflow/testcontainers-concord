@@ -48,7 +48,8 @@ public class DockerTest {
                 .pullPolicy(__ -> false)
                 .containerListener(new ContainerListener() {
                     @Override
-                    public void beforeStart(ContainerType type) { }
+                    public void beforeStart(ContainerType type) {
+                    }
 
                     @Override
                     public void afterStart(ContainerType type, Container<?> container) {
