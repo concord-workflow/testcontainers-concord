@@ -1,0 +1,14 @@
+configuration:
+  runtime: "concord-v2"
+
+flows:
+  default:
+    - set:
+        data:
+          x: 123
+          y: 234
+
+    - set:
+        filePath: ${resource.writeAsJson(data)}
+
+    - log: "file: ${filePath}"

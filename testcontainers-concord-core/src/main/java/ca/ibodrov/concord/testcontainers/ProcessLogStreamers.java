@@ -41,18 +41,32 @@ public class ProcessLogStreamers {
         s.doStop();
     }
 
-    private final ExecutorService executor = Executors.newCachedThreadPool();
+    private ExecutorService executor;
 
     private void doStart(ApiClient client, UUID instanceId) {
-        executor.submit(new ProcessLogStreamer(client, instanceId));
+        synchronized (this) {
+            if (executor == null) {
+                this.executor = Executors.newCachedThreadPool();
+            }
+
+            executor.submit(new ProcessLogStreamer(client, instanceId));
+        }
     }
 
     private void doStop() {
-        executor.shutdownNow();
-        try {
-            executor.awaitTermination(30, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+        synchronized (this) {
+            if (executor == null) {
+                return;
+            }
+
+            executor.shutdown();
+            try {
+                executor.awaitTermination(30, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+
+            this.executor = null;
         }
     }
 }

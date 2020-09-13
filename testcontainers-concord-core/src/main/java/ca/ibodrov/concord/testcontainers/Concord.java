@@ -33,7 +33,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 
-@SuppressWarnings({"unused", "unchecked"})
+@SuppressWarnings({"unchecked"})
 public class Concord<T extends Concord<T>> implements AutoCloseable {
 
     private boolean startAgent = true;
@@ -59,6 +59,7 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
     private Supplier<String> extraConfigurationSupplier;
     private List<Startable> dependsOn;
     private Path sharedContainerDir;
+    private Path persistentWorkDir;
 
     private List<ContainerListener> containerListeners;
 
@@ -367,6 +368,25 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
      */
     public T sharedContainerDir(Path sharedContainerDir) {
         this.sharedContainerDir = sharedContainerDir;
+        return (T) this;
+    }
+
+    public Path persistentWorkDir() {
+        return this.persistentWorkDir;
+    }
+
+    /**
+     * Use the specified host directory as a base directory for
+     * process working directories.
+     * <p/>
+     * This enabled the "persistent" mode on the Agent when the process'
+     * working directory is stored under a known path and isn't removed
+     * when the process end.
+     * <p/>
+     * Only for {@link Mode#DOCKER}.
+     */
+    public T persistentWorkDir(Path persistentWorkDir) {
+        this.persistentWorkDir = persistentWorkDir;
         return (T) this;
     }
 

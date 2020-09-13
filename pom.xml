@@ -33,7 +33,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <concord.version>1.62.0</concord.version>
+        <concord.version>1.65.0</concord.version>
         <testcontainers.version>1.14.3</testcontainers.version>
         <jetbrains.annotations.version>19.0.0</jetbrains.annotations.version>
     </properties>
