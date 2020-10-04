@@ -167,6 +167,14 @@ public final class ConcordProcess {
     }
 
     /**
+     * Kill (cancel) the process.
+     */
+    public void kill() throws ApiException {
+        ProcessApi processApi = new ProcessApi(client);
+        processApi.kill(instanceId);
+    }
+
+    /**
      * Kill (cancel) the process and all it's subprocesses.
      */
     public void killCascade() throws ApiException {
