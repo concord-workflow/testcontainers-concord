@@ -25,6 +25,7 @@ import com.walmartlabs.concord.ApiClient;
 import com.walmartlabs.concord.ApiException;
 import com.walmartlabs.concord.client.SecretEntry;
 import com.walmartlabs.concord.client.SecretOperationResponse;
+import com.walmartlabs.concord.client.SecretsApi;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -62,6 +63,18 @@ public class Secrets {
         Map<String, Object> m = serialize(query);
         m.put("type", SecretEntry.TypeEnum.KEY_PAIR.toString());
         return Utils.postSecret(apiClient, query.org(), m);
+    }
+
+    public boolean isExists(String orgName, String secretName) throws ApiException {
+        SecretsApi secretsApi = new SecretsApi(apiClient);
+        try {
+            return secretsApi.get(orgName, secretName) != null;
+        } catch (ApiException e) {
+            if (e.getCode() == 404) {
+                return false;
+            }
+            throw e;
+        }
     }
 
     @SuppressWarnings("unchecked")

@@ -23,6 +23,7 @@ package ca.ibodrov.concord.testcontainers;
 import com.walmartlabs.concord.ApiClient;
 import com.walmartlabs.concord.ApiException;
 import com.walmartlabs.concord.client.CreateOrganizationResponse;
+import com.walmartlabs.concord.client.GenericOperationResult;
 import com.walmartlabs.concord.client.OrganizationEntry;
 import com.walmartlabs.concord.client.OrganizationsApi;
 
@@ -38,5 +39,9 @@ public class Organizations {
         OrganizationEntry orgEntry = new OrganizationEntry();
         orgEntry.setName(orgName);
         return organizationsApi.createOrUpdate(orgEntry);
+    }
+
+    public GenericOperationResult delete(String orgName) throws ApiException {
+        return organizationsApi.delete(orgName, "yes");
     }
 }
