@@ -30,7 +30,7 @@ import java.net.URI;
 import java.net.URL;
 import java.util.*;
 
-public final class Payload {
+public class Payload {
 
     private final Map<String, Object> input = new LinkedHashMap<>();
     private final List<String> tags = new ArrayList<>();

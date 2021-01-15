@@ -34,11 +34,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public final class Processes {
+public class Processes {
 
     private final ApiClient client;
 
-    Processes(ApiClient client) {
+    public Processes(ApiClient client) {
         this.client = client;
     }
 

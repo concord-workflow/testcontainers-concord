@@ -30,7 +30,7 @@ public class Projects {
 
     private final ProjectsApi projectApi;
 
-    Projects(ApiClient apiClient) {
+    public Projects(ApiClient apiClient) {
         this.projectApi = new ProjectsApi(apiClient);
     }
 

@@ -31,7 +31,7 @@ public class ProcessBuilder {
     private Payload payload;
     private boolean streamLogs;
 
-    ProcessBuilder(ApiClient client, Processes processes) {
+    public ProcessBuilder(ApiClient client, Processes processes) {
         this.client = client;
         this.processes = processes;
     }

@@ -31,7 +31,7 @@ public class Organizations {
 
     private final OrganizationsApi organizationsApi;
 
-    Organizations(ApiClient apiClient) {
+    public Organizations(ApiClient apiClient) {
         this.organizationsApi = new OrganizationsApi(apiClient);
     }
 

@@ -34,7 +34,7 @@ public class Secrets {
 
     private final ApiClient apiClient;
 
-    Secrets(ApiClient apiClient) {
+    public Secrets(ApiClient apiClient) {
         this.apiClient = apiClient;
     }
 

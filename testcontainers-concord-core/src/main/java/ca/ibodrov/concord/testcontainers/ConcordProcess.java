@@ -35,7 +35,7 @@ import java.io.File;
 import java.lang.reflect.Type;
 import java.util.*;
 
-public final class ConcordProcess {
+public class ConcordProcess {
 
     private static final Logger log = LoggerFactory.getLogger(ConcordProcess.class);
 
