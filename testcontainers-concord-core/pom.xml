@@ -6,12 +6,12 @@
     <parent>
         <groupId>ca.ibodrov.concord</groupId>
         <artifactId>testcontainers-concord</artifactId>
-        <version>0.0.34-SNAPSHOT</version>
+        <version>0.0.35</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>testcontainers-concord-core</artifactId>
-    <version>0.0.34-SNAPSHOT</version>
+    <version>0.0.35</version>
     <packaging>takari-jar</packaging>
 
     <dependencies>
