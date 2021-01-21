@@ -49,7 +49,7 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
     private String agentImage = "walmartlabs/concord-agent";
     private String serverImage = "walmartlabs/concord-server";
 
-    private String apiBaseUrl = "http://localhost:8001";
+    private String apiBaseUrl;
     private String apiToken;
     private String mavenConfigurationPath;
     private String pathToRunnerV1 = "target/runner-v1.jar";
@@ -60,6 +60,7 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
     private List<Startable> dependsOn;
     private Path sharedContainerDir;
     private Path persistentWorkDir;
+    private boolean ignoreSslErrors;
 
     private List<ContainerListener> containerListeners;
 
@@ -99,26 +100,40 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
     }
 
     /**
-     * Returns the server API prefix, e.g. http://localhost:8001
-     */
-    public String apiUrlPrefix() {
-        return "http://localhost:" + environment.apiPort();
-    }
-
-    /**
      * Creates a new API Client using the currently configured (or generated) API token.
      */
     public ApiClient apiClient() {
-        return new ConcordApiClient(apiUrlPrefix())
+        return new ConcordApiClient(apiBaseUrl())
+                .setVerifyingSsl(!ignoreSslErrors)
                 .setApiKey(environment.apiToken());
     }
 
+    /**
+     * Returns the configured base URL value for Concord API or the default value for
+     * the environment.
+     * <p/>
+     * E.g. for {@link Mode#LOCAL} or {@link Mode#DOCKER} it is always {@code http://localhost:${port}},
+     * where the {@code port} value can be dynamically generated.
+     *
+     * @see #apiBaseUrl(String)
+     */
     public String apiBaseUrl() {
+        if (apiBaseUrl == null) {
+            switch (mode) {
+                case REMOTE:
+                    throw new IllegalStateException("The 'apiBaseUrl' value is not set. " +
+                            "The REMOTE mode requires 'apiBaseUrl' to be explicitly configured.");
+                case LOCAL:
+                case DOCKER:
+                    return "http://localhost:" + environment.apiPort();
+            }
+        }
+
         return apiBaseUrl;
     }
 
     /**
-     * Sets the base URL of a remote T API server.
+     * Sets the base URL of a remote Concord API server.
      * Required for {@link Mode#REMOTE}.
      */
     public T apiBaseUrl(String apiBaseUrl) {
@@ -131,7 +146,7 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
     }
 
     /**
-     * Sets the default API token to use with a remote T API server.
+     * Sets the default API token to use with a remote Concord API server.
      * Required for {@link Mode#REMOTE}.
      */
     public T apiToken(String apiToken) {
@@ -390,6 +405,21 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
         return (T) this;
     }
 
+    public boolean ignoreSslErrors() {
+        return ignoreSslErrors;
+    }
+
+    /**
+     * If set to {@code true} the API client ignores any SSL certificate errors.
+     * Useful when working with a Concord environment deployed with a self-signed
+     * certificate.
+     * Default value is {@code false} (i.e. any SSL error will result in an exception).
+     */
+    public T ignoreSslErrors(boolean ignoreSslErrors) {
+        this.ignoreSslErrors = ignoreSslErrors;
+        return (T) this;
+    }
+
     /**
      * Returns the test host's address that can be used to connect
      * to the test host's services from inside a container.
@@ -503,7 +533,7 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
         DOCKER,
 
         /**
-         * Connect to a remote T instance.
+         * Connect to a remote Concord instance.
          */
         REMOTE
     }
