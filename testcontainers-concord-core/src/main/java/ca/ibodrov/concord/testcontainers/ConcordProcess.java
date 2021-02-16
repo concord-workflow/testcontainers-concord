@@ -25,15 +25,23 @@ import com.google.gson.reflect.TypeToken;
 import com.squareup.okhttp.Call;
 import com.walmartlabs.concord.ApiClient;
 import com.walmartlabs.concord.ApiException;
+import com.walmartlabs.concord.StringUtil;
+import com.walmartlabs.concord.agent.logging.FileWatcher;
 import com.walmartlabs.concord.client.*;
 import com.walmartlabs.concord.client.ProcessEntry.StatusEnum;
+import org.apache.commons.io.IOUtils;
 import org.intellij.lang.annotations.Language;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class ConcordProcess {
 
@@ -210,8 +218,8 @@ public class ConcordProcess {
             throw new RuntimeException("Error converting out variables: " + e.getMessage());
         }
     }
-
-    private byte[] getLog() throws ApiException {
+    
+    public byte[] getLog() throws ApiException {
         Set<String> auths = client.getAuthentications().keySet();
         String[] authNames = auths.toArray(new String[0]);
 
