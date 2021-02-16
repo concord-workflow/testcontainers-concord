@@ -67,6 +67,10 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
         </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+        </dependency>
 
         <!-- testcontainers bring their own dependency on junit which we're trying to avoid in this module -->
         <dependency>

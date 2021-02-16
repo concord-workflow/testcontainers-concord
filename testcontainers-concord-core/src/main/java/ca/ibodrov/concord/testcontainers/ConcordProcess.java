@@ -25,8 +25,6 @@ import com.google.gson.reflect.TypeToken;
 import com.squareup.okhttp.Call;
 import com.walmartlabs.concord.ApiClient;
 import com.walmartlabs.concord.ApiException;
-import com.walmartlabs.concord.StringUtil;
-import com.walmartlabs.concord.agent.logging.FileWatcher;
 import com.walmartlabs.concord.client.*;
 import com.walmartlabs.concord.client.ProcessEntry.StatusEnum;
 import org.apache.commons.io.IOUtils;
@@ -34,10 +32,7 @@ import org.intellij.lang.annotations.Language;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.function.Predicate;
@@ -219,11 +214,11 @@ public class ConcordProcess {
         }
     }
 
-    public List<String> getLogLines() throws ApiException{
+    public List<String> getLogLines() throws ApiException {
         return getLogLines(line -> true);
     }
 
-    public List<String> getLogLines(Predicate<String> lineFilter) throws ApiException{
+    public List<String> getLogLines(Predicate<String> lineFilter) throws ApiException {
         try {
             return IOUtils.readLines(
                     new InputStreamReader(
@@ -231,7 +226,7 @@ public class ConcordProcess {
                     .stream()
                     .filter(lineFilter)
                     .collect(Collectors.toList());
-        }catch (IOException ioex){
+        } catch (IOException ioex) {
             throw new RuntimeException("Failed to read log lines", ioex);
         }
     }
