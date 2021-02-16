@@ -218,7 +218,24 @@ public class ConcordProcess {
             throw new RuntimeException("Error converting out variables: " + e.getMessage());
         }
     }
-    
+
+    public List<String> getLogLines() throws ApiException{
+        return getLogLines(line -> true);
+    }
+
+    public List<String> getLogLines(Predicate<String> lineFilter) throws ApiException{
+        try {
+            return IOUtils.readLines(
+                    new InputStreamReader(
+                            new ByteArrayInputStream(getLog())))
+                    .stream()
+                    .filter(lineFilter)
+                    .collect(Collectors.toList());
+        }catch (IOException ioex){
+            throw new RuntimeException("Failed to read log lines", ioex);
+        }
+    }
+
     public byte[] getLog() throws ApiException {
         Set<String> auths = client.getAuthentications().keySet();
         String[] authNames = auths.toArray(new String[0]);
