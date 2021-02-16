@@ -264,11 +264,12 @@ public class ConcordProcess {
                     }
                 }
             } catch (ApiException e) {
+                if (--retries < 0) {
+                    throw e;
+                }
+
                 if (e.getCode() == 404) {
                     log.warn("waitForStatus -> process not found, retrying... ({})", retries);
-                    if (--retries < 0) {
-                        throw e;
-                    }
                 }
             }
 
