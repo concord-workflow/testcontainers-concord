@@ -278,8 +278,8 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
             log.warn("Can't specify 'apiToken' value when using Mode.DOCKER");
         }
 
-        if ((opts.useMavenCentral() || opts.useLocalMavenRepository()) && opts.mavenConfigurationPath() != null) {
-            log.warn("The 'mavenConfigurationPath' option is mutually exclusive with 'useLocalMavenRepository' or 'useMavenCentral'.");
+        if ((opts.useMavenCentral() || opts.useLocalMavenRepository() || opts.extraMavenRepositories() != null) && opts.mavenConfigurationPath() != null) {
+            log.warn("The 'mavenConfigurationPath' option is mutually exclusive with 'useLocalMavenRepository', 'useMavenCentral' or 'extraMavenRepositories'.");
         }
 
         Path persistentWorkDir = opts.persistentWorkDir();
@@ -304,6 +304,10 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
             central.put("id", "central");
             central.put("url", "https://repo.maven.apache.org/maven2/");
             repositories.add(central);
+        }
+
+        if (opts.extraMavenRepositories() != null) {
+            repositories.addAll(opts.extraMavenRepositories());
         }
 
         Map<String, Object> m = Collections.singletonMap("repositories", repositories);

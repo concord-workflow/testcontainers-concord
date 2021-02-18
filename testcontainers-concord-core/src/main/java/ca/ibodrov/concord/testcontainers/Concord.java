@@ -31,6 +31,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 
 @SuppressWarnings({"unchecked"})
@@ -39,8 +40,10 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
     private boolean startAgent = true;
     private boolean streamAgentLogs;
     private boolean streamServerLogs;
-    private boolean useLocalMavenRepository;
+
     private boolean useMavenCentral = true;
+    private boolean useLocalMavenRepository;
+    private List<Map<String, Object>> extraMavenRepositories;
 
     private ImagePullPolicy pullPolicy;
     private Mode mode = Mode.DOCKER;
@@ -256,8 +259,8 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
         return (T) this;
     }
 
-    public boolean useLocalMavenRepository() {
-        return this.useLocalMavenRepository;
+    public boolean useMavenCentral() {
+        return this.useMavenCentral;
     }
 
     /**
@@ -268,8 +271,8 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
         return (T) this;
     }
 
-    public boolean useMavenCentral() {
-        return this.useMavenCentral;
+    public boolean useLocalMavenRepository() {
+        return this.useLocalMavenRepository;
     }
 
     /**
@@ -280,6 +283,20 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
      */
     public T useLocalMavenRepository(boolean useLocalMavenRepository) {
         this.useLocalMavenRepository = useLocalMavenRepository;
+        return (T) this;
+    }
+
+    public List<Map<String, Object>> extraMavenRepositories() {
+        return this.extraMavenRepositories;
+    }
+
+    /**
+     * Additional Maven repositories to use.
+     * Doesn't work with {@link Mode#LOCAL} or {@link Mode#REMOTE}.
+     * Exclusive with {@link #mavenConfigurationPath}
+     */
+    public T extraMavenRepositories(List<Map<String, Object>> extraMavenRepositories) {
+        this.extraMavenRepositories = extraMavenRepositories;
         return (T) this;
     }
 
