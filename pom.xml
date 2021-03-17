@@ -34,7 +34,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <concord.version>1.65.0</concord.version>
-        <testcontainers.version>1.14.3</testcontainers.version>
+        <testcontainers.version>1.15.2</testcontainers.version>
         <jetbrains.annotations.version>19.0.0</jetbrains.annotations.version>
     </properties>
 
