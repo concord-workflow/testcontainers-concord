@@ -219,6 +219,7 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
         try {
             Path dst = Files.createTempFile("server", ".dst");
             String s = Resources.toString(DockerConcordEnvironment.class.getResource("docker/concord.conf"), Charsets.UTF_8);
+            s = s.replace("%%agentToken%%", Utils.randomToken());
             s = s.replace("%%persistentWorkDir%%", persistentWorkDir != null ? persistentWorkDir.toString() : "");
             s = s.replace("%%extra%%", extraConfigurationSupplier != null ? extraConfigurationSupplier.get() : "");
             Files.write(dst, s.getBytes(), StandardOpenOption.TRUNCATE_EXISTING);
@@ -261,7 +262,7 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
     }
 
     private static String getApiToken(String s) {
-        String msg = "API token created: ";
+        String msg = "API token created for user 'admin': ";
         int start = s.indexOf(msg);
         if (start >= 0) {
             int end = s.indexOf('\n', start);

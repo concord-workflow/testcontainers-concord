@@ -33,10 +33,7 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.URI;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 public final class Utils {
@@ -120,6 +117,14 @@ public final class Utils {
         }
 
         return b.toString();
+    }
+
+    public static String randomToken() {
+        byte[] ab = new byte[16];
+        ThreadLocalRandom.current().nextBytes(ab);
+
+        Base64.Encoder e = Base64.getEncoder().withoutPadding();
+        return e.encodeToString(ab);
     }
 
     public static String randomPwd() {

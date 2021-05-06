@@ -39,10 +39,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Supplier;
 
 public class LocalConcordEnvironment implements ConcordEnvironment {
@@ -76,7 +74,7 @@ public class LocalConcordEnvironment implements ConcordEnvironment {
             db.dependsOn(dependsOn);
         }
 
-        this.apiToken = randomToken();
+        this.apiToken = Utils.randomToken();
 
         this.pathToRunnerV1 = opts.pathToRunnerV1();
         this.pathToRunnerV2 = opts.pathToRunnerV2();
@@ -178,14 +176,6 @@ public class LocalConcordEnvironment implements ConcordEnvironment {
         if (opts.apiToken() != null) {
             log.warn("Can't specify 'apiToken' value when using Mode.DOCKER");
         }
-    }
-
-    private static String randomToken() {
-        byte[] ab = new byte[16];
-        ThreadLocalRandom.current().nextBytes(ab);
-
-        Base64.Encoder e = Base64.getEncoder().withoutPadding();
-        return e.encodeToString(ab);
     }
 
     private static void waitForHttp(String url, long timeout) throws IOException {
