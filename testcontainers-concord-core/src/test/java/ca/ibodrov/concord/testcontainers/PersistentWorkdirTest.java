@@ -57,7 +57,7 @@ public class PersistentWorkdirTest {
         String filePath = (String) out.get("filePath");
         assertNotNull(filePath);
 
-        Path p = persistentWorkDir.resolve(proc.instanceId().toString()).resolve("payload").resolve(filePath);
+        Path p = persistentWorkDir.resolve(proc.instanceId().toString()).resolve(filePath);
         assertTrue(Files.exists(p));
 
         Map<String, Object> map = parseJsonFile(p);
