@@ -45,7 +45,6 @@ public class DockerTest {
     public static void setUp() {
         Concord<?> c = new Concord<>()
                 .mode(Concord.Mode.DOCKER)
-                .pullPolicy(__ -> false)
                 .containerListener(new ContainerListener() {
                     @Override
                     public void beforeStart(ContainerType type) {

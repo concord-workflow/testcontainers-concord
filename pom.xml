@@ -12,11 +12,11 @@
 
     <groupId>ca.ibodrov.concord</groupId>
     <artifactId>testcontainers-concord</artifactId>
-    <version>0.0.40-SNAPSHOT</version>
+    <version>0.0.41-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>testcontainers-concord</name>
-    <description>Allows running Concord in JUnit 4 tests using Testcontainers</description>
+    <description>Allows running Concord in JUnit 5 tests using Testcontainers</description>
 
     <licenses>
         <license>
@@ -36,11 +36,13 @@
         <concord.version>1.65.0</concord.version>
         <testcontainers.version>1.15.2</testcontainers.version>
         <jetbrains.annotations.version>19.0.0</jetbrains.annotations.version>
+        <junit5.version>5.8.2</junit5.version>
     </properties>
 
     <modules>
         <module>testcontainers-concord-core</module>
         <module>testcontainers-concord-junit4</module>
+        <module>testcontainers-concord-junit5</module>
         <module>testcontainers-concord-shaded</module>
     </modules>
 
@@ -63,6 +65,11 @@
                 <groupId>org.jetbrains</groupId>
                 <artifactId>annotations</artifactId>
                 <version>${jetbrains.annotations.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-api</artifactId>
+                <version>${junit5.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

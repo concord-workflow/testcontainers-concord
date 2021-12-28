@@ -24,7 +24,6 @@ public class PersistentWorkdirTest {
         persistentWorkDir = Files.createTempDirectory("test");
 
         concord = new Concord<>()
-                .pullPolicy(imageName -> false)
                 .mode(Concord.Mode.DOCKER)
                 .persistentWorkDir(persistentWorkDir)
                 .streamAgentLogs(true)

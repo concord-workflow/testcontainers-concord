@@ -10,7 +10,7 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>testcontainers-concord-junit4</artifactId>
+    <artifactId>testcontainers-concord-junit5</artifactId>
     <version>0.0.41-SNAPSHOT</version>
     <packaging>takari-jar</packaging>
 
@@ -25,8 +25,8 @@
             <artifactId>concord-client</artifactId>
         </dependency>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
         </dependency>
     </dependencies>
 

@@ -1,6 +1,6 @@
 # Testcontainers Integration for Concord
 
-Provides a JUnit 4 test rule to run Concord containers using
+Provides a JUnit test rules to run Concord containers using
 [Testcontainers](https://www.testcontainers.org/).
 
 ## Usage
@@ -13,12 +13,23 @@ Provides a JUnit 4 test rule to run Concord containers using
 </dependency>
 ```
 
+or
+
+```xml
+<dependency>
+    <groupId>ca.ibodrov.concord</groupId>
+    <artifactId>testcontainers-concord-junit5</artifactId>
+    <version>...</version>
+</dependency>
+```
+
 ```java
 public class MyTest {
 
     @Rule
     public ConcordRule concord = new ConcordRule();
 
+    @Test
     public void test() {
         // ...
     }  
@@ -45,6 +56,7 @@ public class MyTest {
             .apiBaseUrl("http://localhost:8001")
             .apiToken("...");
 
+    @Test
     public void test() {
         // ...
     }  
@@ -62,6 +74,7 @@ public class MyTest {
     public ConcordRule concord = new ConcordRule()
             .mode(Concord.Mode.LOCAL);
 
+    @Test
     public void test() {
         // ...
     }  
