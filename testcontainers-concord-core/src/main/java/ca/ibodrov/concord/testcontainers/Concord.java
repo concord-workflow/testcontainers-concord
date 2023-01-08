@@ -66,6 +66,8 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
 
     private ConcordEnvironment environment;
 
+    private List<MountPoint> agentBindMounts;
+
     private Map<String, String> agentEnvironment;
 
     /**
@@ -474,6 +476,18 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
         }
         this.containerListeners.add(listener);
         return (T) this;
+    }
+
+    public T agentBindMount(String source, String dest) {
+        if (this.agentBindMounts == null) {
+            this.agentBindMounts = new ArrayList<>();
+        }
+        this.agentBindMounts.add(new MountPoint(source, dest));
+        return (T) this;
+    }
+
+    public List<MountPoint> getAgentBindMounts() {
+        return this.agentBindMounts;
     }
 
     public T agentEnv(String name, String value) {
