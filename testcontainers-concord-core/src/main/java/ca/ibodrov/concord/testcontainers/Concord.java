@@ -28,10 +28,7 @@ import org.testcontainers.images.PullPolicy;
 import org.testcontainers.lifecycle.Startable;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Supplier;
 
 @SuppressWarnings({"unchecked"})
@@ -68,6 +65,8 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
     private List<ContainerListener> containerListeners;
 
     private ConcordEnvironment environment;
+
+    private Map<String, String> agentEnvironment;
 
     /**
      * Starts a Concord instance using the current configuration.
@@ -475,6 +474,18 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
         }
         this.containerListeners.add(listener);
         return (T) this;
+    }
+
+    public T agentEnv(String name, String value) {
+        if (this.agentEnvironment == null) {
+            this.agentEnvironment = new HashMap<>();
+        }
+        this.agentEnvironment.put(name, value);
+        return (T) this;
+    }
+
+    public Map<String, String> agentEnvironment() {
+        return this.agentEnvironment;
     }
 
     /**
