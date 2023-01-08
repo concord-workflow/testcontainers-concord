@@ -276,10 +276,11 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
     }
 
     /**
-     * If {@code true} the the local maven repository {@code $HOME/.m2/repository}
+     * If {@code true} the local maven repository {@code $HOME/.m2/repository}
      * will be mounted into the server and agent containers.
      * Doesn't work with {@link Mode#LOCAL} or {@link Mode#REMOTE}.
-     * Exclusive with {@link #mavenConfigurationPath}
+     * Exclusive with {@link #mavenConfigurationPath}.
+     * Like mvn, respects the {@code maven.repo.local} system property.
      */
     public T useLocalMavenRepository(boolean useLocalMavenRepository) {
         this.useLocalMavenRepository = useLocalMavenRepository;

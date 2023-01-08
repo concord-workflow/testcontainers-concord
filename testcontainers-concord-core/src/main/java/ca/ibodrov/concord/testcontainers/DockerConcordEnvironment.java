@@ -137,7 +137,7 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
             mountMavenConfigurationFile(agent, mavenConfigurationPath);
         } else {
             if (opts.useLocalMavenRepository()) {
-                Path src = Paths.get(System.getProperty("user.home"), ".m2", "repository");
+                Path src = Utils.getLocalMavenRepositoryPath();
                 if (!Files.exists(src) || !Files.isDirectory(src)) {
                     log.warn("Can't mount local Maven repository into containers. The path doesn't exist or not a directory: {}", src.toAbsolutePath());
                 } else {

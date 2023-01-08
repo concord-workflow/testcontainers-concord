@@ -32,6 +32,7 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.URI;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -129,6 +130,16 @@ public final class Utils {
 
     public static String randomPwd() {
         return "pwd_" + randomString() + "A!";
+    }
+
+    public static Path getLocalMavenRepositoryPath() {
+        String localPath = System.getProperty("maven.repo.local");
+        if (localPath == null) {
+            // fallback
+            return Paths.get(System.getProperty("user.home"), ".m2", "repository");
+        }
+
+        return Paths.get(localPath);
     }
 
     private Utils() {
