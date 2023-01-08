@@ -580,4 +580,24 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
          */
         REMOTE
     }
+
+    public static class MountPoint {
+
+        private final String source;
+
+        private final String dest;
+
+        public MountPoint(String source, String dest) {
+            this.source = source;
+            this.dest = dest;
+        }
+
+        public String getDest() {
+            return dest;
+        }
+
+        public String getSource() {
+            return source;
+        }
+    }
 }
