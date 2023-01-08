@@ -135,6 +135,10 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
             opts.getAgentBindMounts().forEach(m -> agent.withFileSystemBind(m.getSource(), m.getDest()));
         }
 
+        if (opts.agentEnvironment() != null) {
+            opts.agentEnvironment().forEach(agent::addEnv);
+        }
+
         String mavenConfigurationPath = opts.mavenConfigurationPath();
         if (mavenConfigurationPath != null) {
             mountMavenConfigurationFile(server, mavenConfigurationPath);
