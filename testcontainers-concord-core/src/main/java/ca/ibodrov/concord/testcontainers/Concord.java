@@ -69,7 +69,7 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
 
     private ConcordEnvironment environment;
 
-    private List<Mount> agentBindMounts;
+    private List<MountPoint> agentBindMounts;
 
     /**
      * Starts a Concord instance using the current configuration.
@@ -482,11 +482,11 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
         if (this.agentBindMounts == null) {
             this.agentBindMounts = new ArrayList<>();
         }
-        this.agentBindMounts.add(new Mount(source, dest));
+        this.agentBindMounts.add(new MountPoint(source, dest));
         return (T) this;
     }
 
-    public List<Mount> getAgentBindMounts() {
+    public List<MountPoint> getAgentBindMounts() {
         return this.agentBindMounts;
     }
 
@@ -569,13 +569,13 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
         REMOTE
     }
 
-    public static class Mount {
+    public static class MountPoint {
 
         private final String source;
 
         private final String dest;
 
-        public Mount(String source, String dest) {
+        public MountPoint(String source, String dest) {
             this.source = source;
             this.dest = dest;
         }
