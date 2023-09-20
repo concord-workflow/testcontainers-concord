@@ -51,6 +51,7 @@ public class LocalConcordEnvironment implements ConcordEnvironment {
 
     private final GenericContainer<?> db;
     private final String apiToken;
+    private final String agentToken;
     private final String pathToRunnerV1;
     private final String pathToRunnerV2;
     private final boolean startAgent;
@@ -77,6 +78,7 @@ public class LocalConcordEnvironment implements ConcordEnvironment {
         }
 
         this.apiToken = Utils.randomToken();
+        this.agentToken = Utils.randomToken();
 
         this.pathToRunnerV1 = opts.pathToRunnerV1();
         this.pathToRunnerV2 = opts.pathToRunnerV2();
@@ -162,6 +164,7 @@ public class LocalConcordEnvironment implements ConcordEnvironment {
         s = s.replaceAll("SERVER_PORT", String.valueOf(apiPort));
         s = s.replaceAll("DB_URL", "jdbc:postgresql://localhost:" + db.getFirstMappedPort() + "/postgres");
         s = s.replaceAll("API_TOKEN", apiToken);
+        s = s.replaceAll("AGENT_TOKEN", agentToken);
         s = s.replaceAll("JAVA_CMD", getJavaCmd());
         if (pathToRunnerV1 != null) {
             s = s.replaceAll("RUNNER_V1_PATH", pathToRunnerV1);
