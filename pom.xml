@@ -6,7 +6,7 @@
     <parent>
         <groupId>io.takari</groupId>
         <artifactId>takari</artifactId>
-        <version>27</version>
+        <version>50</version>
         <relativePath />
     </parent>
 
@@ -27,13 +27,13 @@
     </licenses>
 
     <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <concord.version>1.65.0</concord.version>
+        <concord.version>2.0.1-SNAPSHOT</concord.version>
         <testcontainers.version>1.15.2</testcontainers.version>
         <jetbrains.annotations.version>19.0.0</jetbrains.annotations.version>
         <junit5.version>5.8.2</junit5.version>
@@ -41,7 +41,6 @@
 
     <modules>
         <module>testcontainers-concord-core</module>
-        <module>testcontainers-concord-junit4</module>
         <module>testcontainers-concord-junit5</module>
         <module>testcontainers-concord-shaded</module>
     </modules>
@@ -69,6 +68,11 @@
             <dependency>
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter-api</artifactId>
+                <version>${junit5.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-engine</artifactId>
                 <version>${junit5.version}</version>
             </dependency>
         </dependencies>
@@ -117,7 +121,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-shade-plugin</artifactId>
-                    <version>3.2.3</version>
+                    <version>3.5.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>

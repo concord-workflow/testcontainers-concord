@@ -21,7 +21,7 @@ package ca.ibodrov.concord.testcontainers;
  */
 
 import com.walmartlabs.concord.ApiClient;
-import com.walmartlabs.concord.client.ConcordApiClient;
+import com.walmartlabs.concord.client2.ConcordApiClient;
 import org.jetbrains.annotations.NotNull;
 import org.testcontainers.images.ImagePullPolicy;
 import org.testcontainers.images.PullPolicy;

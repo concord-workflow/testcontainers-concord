@@ -22,9 +22,9 @@ package ca.ibodrov.concord.testcontainers;
 
 import com.walmartlabs.concord.ApiClient;
 import com.walmartlabs.concord.ApiException;
-import com.walmartlabs.concord.client.ProjectEntry;
-import com.walmartlabs.concord.client.ProjectOperationResponse;
-import com.walmartlabs.concord.client.ProjectsApi;
+import com.walmartlabs.concord.client2.ProjectEntry;
+import com.walmartlabs.concord.client2.ProjectOperationResponse;
+import com.walmartlabs.concord.client2.ProjectsApi;
 
 public class Projects {
 
@@ -36,11 +36,11 @@ public class Projects {
 
     public ProjectOperationResponse create(String orgName, String projectName) throws ApiException {
         ProjectEntry projectEntry = new ProjectEntry()
-                .setName(projectName)
-                .setOrgName(orgName)
-                .setAcceptsRawPayload(Boolean.TRUE)
-                .setVisibility(ProjectEntry.VisibilityEnum.PUBLIC);
+                .name(projectName)
+                .orgName(orgName)
+                .acceptsRawPayload(Boolean.TRUE)
+                .visibility(ProjectEntry.VisibilityEnum.PUBLIC);
 
-        return projectApi.createOrUpdate(orgName, projectEntry);
+        return projectApi.createOrUpdateProject(orgName, projectEntry);
     }
 }

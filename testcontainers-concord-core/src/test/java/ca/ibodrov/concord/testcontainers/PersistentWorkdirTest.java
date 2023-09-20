@@ -1,10 +1,10 @@
 package ca.ibodrov.concord.testcontainers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.walmartlabs.concord.client.ProcessEntry;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import com.walmartlabs.concord.client2.ProcessEntry;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,14 +12,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class PersistentWorkdirTest {
 
     private static Path persistentWorkDir;
     private static Concord<?> concord;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() throws Exception {
         persistentWorkDir = Files.createTempDirectory("test");
 
@@ -32,7 +34,7 @@ public class PersistentWorkdirTest {
         concord.start();
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() {
         if (concord != null) {
             concord.close();

@@ -22,10 +22,10 @@ package ca.ibodrov.concord.testcontainers;
 
 import com.walmartlabs.concord.ApiClient;
 import com.walmartlabs.concord.ApiException;
-import com.walmartlabs.concord.client.CreateOrganizationResponse;
-import com.walmartlabs.concord.client.GenericOperationResult;
-import com.walmartlabs.concord.client.OrganizationEntry;
-import com.walmartlabs.concord.client.OrganizationsApi;
+import com.walmartlabs.concord.client2.CreateOrganizationResponse;
+import com.walmartlabs.concord.client2.GenericOperationResult;
+import com.walmartlabs.concord.client2.OrganizationEntry;
+import com.walmartlabs.concord.client2.OrganizationsApi;
 
 public class Organizations {
 
@@ -38,10 +38,10 @@ public class Organizations {
     public CreateOrganizationResponse create(String orgName) throws ApiException {
         OrganizationEntry orgEntry = new OrganizationEntry();
         orgEntry.setName(orgName);
-        return organizationsApi.createOrUpdate(orgEntry);
+        return organizationsApi.createOrUpdateOrg(orgEntry);
     }
 
     public GenericOperationResult delete(String orgName) throws ApiException {
-        return organizationsApi.delete(orgName, "yes");
+        return organizationsApi.deleteOrg(orgName, "yes");
     }
 }

@@ -21,19 +21,16 @@ package ca.ibodrov.concord.testcontainers;
  */
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.reflect.TypeToken;
-import com.squareup.okhttp.Call;
 import com.walmartlabs.concord.ApiClient;
 import com.walmartlabs.concord.ApiException;
-import com.walmartlabs.concord.client.*;
-import com.walmartlabs.concord.client.ProcessEntry.StatusEnum;
+import com.walmartlabs.concord.client2.*;
+import com.walmartlabs.concord.client2.ProcessEntry.StatusEnum;
 import org.apache.commons.io.IOUtils;
 import org.intellij.lang.annotations.Language;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.lang.reflect.Type;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -59,7 +56,7 @@ public class ConcordProcess {
 
     public ProcessEntry getEntry(String... includes) throws ApiException {
         ProcessV2Api api = new ProcessV2Api(client);
-        return api.get(instanceId, Arrays.asList(includes));
+        return api.getProcess(instanceId, new HashSet<>(Arrays.asList(includes)));
     }
 
     /**
@@ -86,7 +83,7 @@ public class ConcordProcess {
     public ProcessEntry waitForStatus(StatusEnum status, StatusEnum... more) throws ApiException {
         ProcessV2Api api = new ProcessV2Api(client);
 
-        return waitForStatus(() -> Collections.singletonList(api.get(instanceId, Collections.emptyList())), status, more);
+        return waitForStatus(() -> Collections.singletonList(api.getProcess(instanceId, Collections.emptySet())), status, more);
     }
 
     /**
@@ -131,7 +128,7 @@ public class ConcordProcess {
      */
     public List<FormListEntry> forms() throws ApiException {
         ProcessFormsApi formsApi = new ProcessFormsApi(client);
-        return formsApi.list(instanceId);
+        return formsApi.listProcessForms(instanceId);
     }
 
     /**
@@ -139,7 +136,7 @@ public class ConcordProcess {
      */
     public List<ProcessCheckpointEntry> checkpoints() throws ApiException {
         CheckpointApi checkpointApi = new CheckpointApi(client);
-        return checkpointApi.list(instanceId);
+        return checkpointApi.listCheckpoints(instanceId);
     }
 
     /**
@@ -147,7 +144,7 @@ public class ConcordProcess {
      */
     public void restoreCheckpoint(UUID checkpointId) throws ApiException {
         CheckpointApi checkpointApi = new CheckpointApi(client);
-        checkpointApi.restore(instanceId, new RestoreCheckpointRequest().setId(checkpointId));
+        checkpointApi.restore(instanceId, new RestoreCheckpointRequest().id(checkpointId));
     }
 
     /**
@@ -155,7 +152,7 @@ public class ConcordProcess {
      */
     public FormSubmitResponse submitForm(String formName, Map<String, Object> data) throws ApiException {
         ProcessFormsApi formsApi = new ProcessFormsApi(client);
-        return formsApi.submit(instanceId, formName, data);
+        return formsApi.submitForm(instanceId, formName, data);
     }
 
     /**
@@ -166,7 +163,7 @@ public class ConcordProcess {
         processApi.disable(instanceId, true);
 
         ProcessV2Api processV2Api = new ProcessV2Api(client);
-        return processV2Api.get(instanceId, null);
+        return processV2Api.getProcess(instanceId, null);
     }
 
     /**
@@ -197,18 +194,17 @@ public class ConcordProcess {
      */
     public List<ProcessEntry> subprocesses(String... tags) throws ApiException {
         ProcessApi processApi = new ProcessApi(client);
-        return processApi.listSubprocesses(instanceId, tags == null ? null : Arrays.asList(tags));
+        return processApi.listSubprocesses(instanceId, tags == null ? null : new HashSet<>(Arrays.asList(tags)));
     }
 
     /**
      * Returns process out variables.
      */
     @SuppressWarnings("unchecked")
-    public Map<String, Object> getOutVariables() throws ApiException {
+    public Map<String, Object> getOutVariables() {
         ProcessApi processApi = new ProcessApi(client);
-        File outJson = processApi.downloadAttachment(instanceId, "out.json");
-        try {
-            return new ObjectMapper().readValue(outJson, Map.class);
+        try (InputStream is = processApi.downloadAttachment(instanceId, "out.json")) {
+            return new ObjectMapper().readValue(is, Map.class);
         } catch (Exception e) {
             throw new RuntimeException("Error converting out variables: " + e.getMessage());
         }
@@ -232,15 +228,12 @@ public class ConcordProcess {
     }
 
     public byte[] getLog() throws ApiException {
-        Set<String> auths = client.getAuthentications().keySet();
-        String[] authNames = auths.toArray(new String[0]);
-
-        Call c = client.buildCall("/api/v1/process/" + instanceId + "/log", "GET", new ArrayList<>(), new ArrayList<>(),
-                null, new HashMap<>(), new HashMap<>(), authNames, null);
-
-        Type t = new TypeToken<byte[]>() {
-        }.getType();
-        return client.<byte[]>execute(c, t).getData();
+        ProcessApi processApi = new ProcessApi(client);
+        try (InputStream is = processApi.getProcessLog(instanceId, null)) {
+            return is.readAllBytes();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static ProcessEntry waitForStatus(ProcessSupplier processSupplier, StatusEnum status, StatusEnum... more) throws ApiException {
