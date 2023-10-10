@@ -21,11 +21,7 @@ package ca.ibodrov.concord.testcontainers;
  */
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.walmartlabs.concord.ApiClient;
-import com.walmartlabs.concord.ApiException;
-import com.walmartlabs.concord.client.SecretEntry;
-import com.walmartlabs.concord.client.SecretOperationResponse;
-import com.walmartlabs.concord.client.SecretsApi;
+import com.walmartlabs.concord.client2.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -43,9 +39,10 @@ public class Secrets {
      */
     public SecretOperationResponse createSecret(NewSecretQuery query, byte[] value) throws ApiException {
         Map<String, Object> m = serialize(query);
-        m.put("type", SecretEntry.TypeEnum.DATA.toString());
+        m.put("type", SecretEntryV2.TypeEnum.DATA.toString());
         m.put("data", value);
-        return Utils.postSecret(apiClient, query.org(), m);
+        SecretsApi api = new SecretsApi(apiClient);
+        return api.createSecret(query.org(), m);
     }
 
     /**
@@ -53,22 +50,24 @@ public class Secrets {
      */
     public SecretOperationResponse createSecret(NewSecretQuery query, String username, String password) throws ApiException {
         Map<String, Object> m = serialize(query);
-        m.put("type", SecretEntry.TypeEnum.USERNAME_PASSWORD.toString());
+        m.put("type", SecretEntryV2.TypeEnum.USERNAME_PASSWORD.toString());
         m.put("username", username);
         m.put("password", password);
-        return Utils.postSecret(apiClient, query.org(), m);
+        SecretsApi api = new SecretsApi(apiClient);
+        return api.createSecret(query.org(), m);
     }
 
     public SecretOperationResponse generateKeyPair(NewSecretQuery query) throws ApiException {
         Map<String, Object> m = serialize(query);
-        m.put("type", SecretEntry.TypeEnum.KEY_PAIR.toString());
-        return Utils.postSecret(apiClient, query.org(), m);
+        m.put("type", SecretEntryV2.TypeEnum.KEY_PAIR.toString());
+        SecretsApi api = new SecretsApi(apiClient);
+        return api.createSecret(query.org(), m);
     }
 
     public boolean isExists(String orgName, String secretName) throws ApiException {
-        SecretsApi secretsApi = new SecretsApi(apiClient);
+        SecretsV2Api secretsApi = new SecretsV2Api(apiClient);
         try {
-            return secretsApi.get(orgName, secretName) != null;
+            return secretsApi.getSecret(orgName, secretName) != null;
         } catch (ApiException e) {
             if (e.getCode() == 404) {
                 return false;

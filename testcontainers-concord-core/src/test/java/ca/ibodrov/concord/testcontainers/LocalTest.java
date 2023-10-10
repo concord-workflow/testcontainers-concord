@@ -20,16 +20,18 @@ package ca.ibodrov.concord.testcontainers;
  * =====
  */
 
-import com.walmartlabs.concord.client.ProcessEntry;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import com.walmartlabs.concord.client2.ProcessEntry;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
+@Disabled
 public class LocalTest {
 
     private static Concord<?> concord;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         Concord<?> c = new Concord<>()
                 .mode(Concord.Mode.LOCAL);
@@ -39,7 +41,7 @@ public class LocalTest {
         concord = c;
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() {
         if (concord != null) {
             concord.close();

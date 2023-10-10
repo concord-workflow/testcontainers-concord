@@ -20,7 +20,7 @@ package ca.ibodrov.concord.testcontainers;
  * =====
  */
 
-import com.walmartlabs.concord.ApiClient;
+import com.walmartlabs.concord.client2.ApiClient;
 
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;

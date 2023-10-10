@@ -20,14 +20,7 @@ package ca.ibodrov.concord.testcontainers;
  * =====
  */
 
-import com.walmartlabs.concord.ApiClient;
-import com.walmartlabs.concord.ApiException;
-import com.walmartlabs.concord.ApiResponse;
-import com.walmartlabs.concord.client.ClientUtils;
-import com.walmartlabs.concord.client.ProcessEntry;
-import com.walmartlabs.concord.client.ProcessV2Api;
-import com.walmartlabs.concord.client.StartProcessResponse;
-import com.walmartlabs.concord.common.DateTimeUtils;
+import com.walmartlabs.concord.client2.*;
 
 import java.util.Collections;
 import java.util.List;
@@ -55,18 +48,9 @@ public class Processes {
      * @see <a href="https://concord.walmartlabs.com/docs/api/process.html#form-data">API docs</a>.
      */
     public ConcordProcess start(Map<String, Object> input) throws ApiException {
-        ApiResponse<StartProcessResponse> resp = ClientUtils.postData(client, "/api/v1/process", input, StartProcessResponse.class);
-
-        int code = resp.getStatusCode();
-        if (code < 200 || code >= 300) {
-            if (code == 403) {
-                throw new ApiException("Forbidden: " + resp.getData());
-            }
-
-            throw new ApiException("Request error: " + code);
-        }
-
-        return new ConcordProcess(client, resp.getData().getInstanceId());
+        ProcessApi processApi = new ProcessApi(client);
+        StartProcessResponse spr = processApi.startProcess(input);
+        return new ConcordProcess(client, spr.getInstanceId());
     }
 
     /**
@@ -75,7 +59,7 @@ public class Processes {
     public ConcordProcess get(UUID instanceId) throws ApiException {
         ProcessV2Api processV2Api = new ProcessV2Api(client);
 
-        ProcessEntry entry = processV2Api.get(instanceId, Collections.emptyList());
+        ProcessEntry entry = processV2Api.getProcess(instanceId, Collections.emptySet());
         if (entry == null) {
             throw new IllegalArgumentException("Process not found: " + instanceId);
         }
@@ -95,11 +79,8 @@ public class Processes {
     /**
      * Creates a new process list query.
      */
-    public List<ProcessEntry> list(ProcessListQuery query) throws ApiException {
+    public List<ProcessEntry> list(ProcessListFilter filter) throws ApiException {
         ProcessV2Api processApi = new ProcessV2Api(client);
-        String afterCreatedAt = query.afterCreatedAt() != null ? DateTimeUtils.toIsoString(query.afterCreatedAt()) : null;
-        return processApi.list(query.orgId(), query.orgName(), query.projectId(), query.projectName(), query.repoId(),
-                query.repoName(), afterCreatedAt, null, query.tags(), null,
-                query.initiator(), query.parentInstanceId(), null, query.limit(), query.offset());
+        return processApi.listProcesses(filter);
     }
 }

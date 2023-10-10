@@ -20,14 +20,14 @@ package ca.ibodrov.concord.testcontainers;
  * =====
  */
 
-import com.walmartlabs.concord.ApiClient;
-import com.walmartlabs.concord.client.ConcordApiClient;
+import com.walmartlabs.concord.client2.*;
 import org.jetbrains.annotations.NotNull;
 import org.testcontainers.images.ImagePullPolicy;
 import org.testcontainers.images.PullPolicy;
 import org.testcontainers.lifecycle.Startable;
 
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -107,9 +107,9 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
      * Creates a new API Client using the currently configured (or generated) API token.
      */
     public ApiClient apiClient() {
-        return new ConcordApiClient(apiBaseUrl())
-                .setVerifyingSsl(!ignoreSslErrors)
-                .setApiKey(environment.apiToken());
+
+        return new DefaultApiClientFactory(apiBaseUrl(), Duration.ofSeconds(30), !ignoreSslErrors)
+                .create(ApiClientConfiguration.builder().apiKey(environment.apiToken()).build());
     }
 
     /**

@@ -20,10 +20,9 @@ package ca.ibodrov.concord.testcontainers;
  * =====
  */
 
-import com.walmartlabs.concord.client.ProcessEntry;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import com.walmartlabs.concord.client2.ProcessEntry;
+
+import com.walmartlabs.concord.client2.ProcessListFilter;
 import org.testcontainers.containers.Container;
 import org.testcontainers.utility.MountableFile;
 
@@ -33,15 +32,19 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class DockerTest {
 
     private static Concord<?> concord;
     private static final Path testFile = Paths.get("target/testDir/testFile.txt");
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         Concord<?> c = new Concord<>()
                 .mode(Concord.Mode.DOCKER)
@@ -74,7 +77,7 @@ public class DockerTest {
         concord = c;
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() {
         if (concord != null) {
             concord.close();
@@ -124,7 +127,7 @@ public class DockerTest {
         ConcordProcess p2 = concord.processes().get(p1.instanceId());
         p2.assertLog(".*Hello, Concord!.*");
 
-        List<ProcessEntry> l = concord.processes().list(ProcessListQuery.builder()
+        List<ProcessEntry> l = concord.processes().list(ProcessListFilter.builder()
                 .addTags(tag)
                 .build());
         assertEquals(1, l.size());

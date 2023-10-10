@@ -23,10 +23,6 @@ package ca.ibodrov.concord.testcontainers;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import com.google.inject.Injector;
-import com.squareup.okhttp.Call;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
 import com.walmartlabs.concord.agent.Agent;
 import com.walmartlabs.concord.server.ConcordServer;
 import org.slf4j.Logger;
@@ -35,6 +31,12 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.lifecycle.Startable;
 
 import java.io.IOException;
+import java.net.ConnectException;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URL;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -112,7 +114,7 @@ public class LocalConcordEnvironment implements ConcordEnvironment {
             Path conf = prepareConfigurationFile();
             System.setProperty("ollie.conf", conf.toAbsolutePath().toString());
 
-            this.server = ConcordServer.start();
+            this.server = ConcordServer.withAutoWiring().start();
 
             waitForHttp("http://localhost:" + apiPort() + "/api/v1/server/ping", 60000);
         } catch (Exception e) {
@@ -181,28 +183,26 @@ public class LocalConcordEnvironment implements ConcordEnvironment {
         }
     }
 
-    private static void waitForHttp(String url, long timeout) throws IOException {
+    private static void waitForHttp(String urlStr, long timeout) throws IOException {
         long t0 = System.currentTimeMillis();
 
-        OkHttpClient client = new OkHttpClient();
-        Request req = new Request.Builder()
-                .url(url)
-                .build();
+        URL url = new URL(urlStr);
 
         while (true) {
             long t1 = System.currentTimeMillis();
             if (t1 - t0 >= timeout) {
-                throw new IllegalStateException("Timeout waiting for " + url);
+                throw new IllegalStateException("Timeout waiting for " + urlStr);
             }
 
-            Call call = client.newCall(req);
-            Response resp = call.execute();
+            HttpURLConnection con = (HttpURLConnection) url.openConnection();
+            con.setRequestMethod("GET");
             try {
-                if (resp.code() == 200) {
+                int status = con.getResponseCode();
+                if (status == 200) {
                     break;
                 }
-            } finally {
-                resp.body().close();
+            } catch (ConnectException e) {
+                // ignore
             }
 
             try {

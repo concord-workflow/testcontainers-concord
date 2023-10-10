@@ -20,12 +20,7 @@ package ca.ibodrov.concord.testcontainers;
  * =====
  */
 
-import com.walmartlabs.concord.ApiClient;
-import com.walmartlabs.concord.ApiException;
-import com.walmartlabs.concord.ApiResponse;
-import com.walmartlabs.concord.client.ClientUtils;
-import com.walmartlabs.concord.client.ProcessEntry;
-import com.walmartlabs.concord.client.SecretOperationResponse;
+import com.walmartlabs.concord.client2.*;
 import com.walmartlabs.concord.common.IOUtils;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 
@@ -47,21 +42,6 @@ public final class Utils {
             IOUtils.zip(zip, Paths.get(uri));
         }
         return out.toByteArray();
-    }
-
-    public static <T> T request(ApiClient client, String uri, Map<String, Object> input, Class<T> entityType) throws ApiException {
-        ApiResponse<T> resp = ClientUtils.postData(client, uri, input, entityType);
-
-        int code = resp.getStatusCode();
-        if (code < 200 || code >= 300) {
-            throw new ApiException("Request error: " + code);
-        }
-
-        return resp.getData();
-    }
-
-    public static SecretOperationResponse postSecret(ApiClient client, String orgName, Map<String, Object> input) throws ApiException {
-        return Utils.request(client, "/api/v1/org/" + orgName + "/secret", input, SecretOperationResponse.class);
     }
 
     public static int reservePort(int start) {
