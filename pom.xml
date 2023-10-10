@@ -11,6 +11,7 @@
 
     <name>testcontainers-concord</name>
     <description>Allows running Concord in JUnit 5 tests using Testcontainers</description>
+    <url>https://concord.walmartlabs.com/</url>
 
     <licenses>
         <license>
@@ -19,6 +20,17 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
+
+    <developers>
+        <developer>
+            <id>team</id>
+            <name>Concord Development Team</name>
+            <roles>
+                <role>Project Lead</role>
+            </roles>
+            <timezone>-5</timezone>
+        </developer>
+    </developers>
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -253,6 +265,7 @@
     </build>
 
     <scm>
+        <url>scm:git:git@github.com:concord-workflow/testcontainers-concord.git</url>
         <developerConnection>scm:git:git@github.com:concord-workflow/testcontainers-concord.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
