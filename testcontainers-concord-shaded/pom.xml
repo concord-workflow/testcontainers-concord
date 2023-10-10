@@ -12,7 +12,7 @@
 
     <artifactId>testcontainers-concord-shaded</artifactId>
     <version>0.0.42-SNAPSHOT</version>
-    <packaging>takari-jar</packaging>
+    <packaging>jar</packaging>
 
     <dependencies>
         <dependency>
