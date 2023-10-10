@@ -20,8 +20,7 @@ package ca.ibodrov.concord.testcontainers;
  * =====
  */
 
-import com.walmartlabs.concord.ApiClient;
-import com.walmartlabs.concord.ApiException;
+import com.walmartlabs.concord.client2.*;
 import com.walmartlabs.concord.client2.CreateOrganizationResponse;
 import com.walmartlabs.concord.client2.GenericOperationResult;
 import com.walmartlabs.concord.client2.OrganizationEntry;

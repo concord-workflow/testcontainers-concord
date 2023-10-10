@@ -21,8 +21,6 @@ package ca.ibodrov.concord.testcontainers;
  */
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.walmartlabs.concord.ApiClient;
-import com.walmartlabs.concord.ApiException;
 import com.walmartlabs.concord.client2.*;
 import com.walmartlabs.concord.client2.ProcessEntry.StatusEnum;
 import org.apache.commons.io.IOUtils;

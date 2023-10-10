@@ -20,7 +20,7 @@ package ca.ibodrov.concord.testcontainers;
  * =====
  */
 
-import com.walmartlabs.concord.ApiClient;
+import com.walmartlabs.concord.client2.ApiClient;
 import com.walmartlabs.concord.client2.ProcessApi;
 import com.walmartlabs.concord.client2.ProcessEntry;
 import com.walmartlabs.concord.client2.ProcessEntry.StatusEnum;

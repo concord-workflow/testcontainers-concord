@@ -21,12 +21,7 @@ package ca.ibodrov.concord.testcontainers;
  */
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.walmartlabs.concord.ApiClient;
-import com.walmartlabs.concord.ApiException;
-import com.walmartlabs.concord.client2.SecretEntryV2;
-import com.walmartlabs.concord.client2.SecretOperationResponse;
-import com.walmartlabs.concord.client2.SecretsApi;
-import com.walmartlabs.concord.client2.SecretsV2Api;
+import com.walmartlabs.concord.client2.*;
 
 import java.util.HashMap;
 import java.util.Map;

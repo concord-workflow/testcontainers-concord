@@ -20,11 +20,7 @@ package ca.ibodrov.concord.testcontainers;
  * =====
  */
 
-import com.walmartlabs.concord.ApiClient;
-import com.walmartlabs.concord.ApiException;
-import com.walmartlabs.concord.client2.ProjectEntry;
-import com.walmartlabs.concord.client2.ProjectOperationResponse;
-import com.walmartlabs.concord.client2.ProjectsApi;
+import com.walmartlabs.concord.client2.*;
 
 public class Projects {
 
