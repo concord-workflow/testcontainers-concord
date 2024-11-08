@@ -49,6 +49,8 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
     private String agentImage = "walmartlabs/concord-agent";
     private String serverImage = "walmartlabs/concord-server";
 
+    private String dbInitScriptPath;
+
     private String apiBaseUrl;
     private String apiToken;
     private String mavenConfigurationPath;
@@ -178,6 +180,19 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
 
     public T dbImage(String dbImage) {
         this.dbImage = dbImage;
+        return (T) this;
+    }
+
+    public String dbInitScriptPath() {
+        return dbInitScriptPath;
+    }
+
+    /**
+     * Resource path to the database initialization script.
+     * If set, the script will be executed before the server starts.
+     */
+    public T dbInitScriptPath(String dbInitScriptPath) {
+        this.dbInitScriptPath = dbInitScriptPath;
         return (T) this;
     }
 

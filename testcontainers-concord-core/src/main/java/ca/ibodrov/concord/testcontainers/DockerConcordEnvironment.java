@@ -35,13 +35,14 @@ import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.ImagePullPolicy;
 import org.testcontainers.images.PullPolicy;
+import org.testcontainers.images.builder.Transferable;
 import org.testcontainers.lifecycle.Startable;
 import org.testcontainers.utility.MountableFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.*;
@@ -78,6 +79,20 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
                 .withEnv("POSTGRES_PASSWORD", "q1")
                 .withNetworkAliases("db")
                 .withNetwork(network);
+
+        String dbInitScriptPath = opts.dbInitScriptPath();
+        if (dbInitScriptPath != null) {
+            try(InputStream in = getClass().getResourceAsStream(dbInitScriptPath)) {
+                if (in == null) {
+                    throw new IllegalArgumentException("Can't find the DB init script: " + dbInitScriptPath);
+                }
+
+                byte[] ab = in.readAllBytes();
+                this.db.withCopyToContainer(Transferable.of())
+            } catch (IOException e) {
+                throw new RuntimeException("Error while reading the DB init script: " + e.getMessage(), e);
+            }
+        }
 
         this.server = new GenericContainer<>(opts.serverImage())
                 .dependsOn(db)
@@ -209,6 +224,7 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
     @Override
     public void start() {
         startContainer(ContainerType.DB, this.db);
+
         startContainer(ContainerType.SERVER, this.server);
 
         if (startAgent) {
