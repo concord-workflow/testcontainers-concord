@@ -36,6 +36,7 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
 
     private boolean startAgent = true;
     private boolean streamAgentLogs;
+    private boolean streamDbLogs;
     private boolean streamServerLogs;
 
     private boolean useMavenCentral = true;
@@ -314,6 +315,18 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
      */
     public T extraMavenRepositories(List<Map<String, Object>> extraMavenRepositories) {
         this.extraMavenRepositories = extraMavenRepositories;
+        return (T) this;
+    }
+
+    public boolean streamDbLogs() {
+        return streamDbLogs;
+    }
+
+    /**
+     * Stream the database logs to the console.
+     */
+    public T streamDbLogs(boolean streamDbLogs) {
+        this.streamDbLogs = streamDbLogs;
         return (T) this;
     }
 

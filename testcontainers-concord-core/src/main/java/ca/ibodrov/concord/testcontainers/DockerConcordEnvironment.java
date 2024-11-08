@@ -35,12 +35,10 @@ import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.ImagePullPolicy;
 import org.testcontainers.images.PullPolicy;
-import org.testcontainers.images.builder.Transferable;
 import org.testcontainers.lifecycle.Startable;
 import org.testcontainers.utility.MountableFile;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -82,16 +80,12 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
 
         String dbInitScriptPath = opts.dbInitScriptPath();
         if (dbInitScriptPath != null) {
-            try(InputStream in = getClass().getResourceAsStream(dbInitScriptPath)) {
-                if (in == null) {
-                    throw new IllegalArgumentException("Can't find the DB init script: " + dbInitScriptPath);
-                }
+            DatabaseInit.addInitScriptFromClassPath(db, dbInitScriptPath, "init.sql");
+        }
 
-                byte[] ab = in.readAllBytes();
-                this.db.withCopyToContainer(Transferable.of())
-            } catch (IOException e) {
-                throw new RuntimeException("Error while reading the DB init script: " + e.getMessage(), e);
-            }
+        if (opts.streamDbLogs()) {
+            Slf4jLogConsumer dbLogConsumer = new Slf4jLogConsumer(log);
+            db.withLogConsumer(dbLogConsumer);
         }
 
         this.server = new GenericContainer<>(opts.serverImage())
