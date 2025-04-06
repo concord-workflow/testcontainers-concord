@@ -34,6 +34,10 @@ import java.util.function.Supplier;
 @SuppressWarnings({"unchecked"})
 public class Concord<T extends Concord<T>> implements AutoCloseable {
 
+    private static final String TESTCONTAINERS_CONCORD_DB_IMAGE = "TESTCONTAINERS_CONCORD_DB_IMAGE";
+    private static final String TESTCONTAINERS_CONCORD_SERVER_IMAGE = "TESTCONTAINERS_CONCORD_SERVER_IMAGE";
+    private static final String TESTCONTAINERS_CONCORD_AGENT_IMAGE = "TESTCONTAINERS_CONCORD_AGENT_IMAGE";
+
     private boolean startAgent = true;
     private boolean streamAgentLogs;
     private boolean streamServerLogs;
@@ -173,7 +177,7 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
     }
 
     public String dbImage() {
-        return dbImage;
+        return Utils.getEnv(TESTCONTAINERS_CONCORD_DB_IMAGE, dbImage);
     }
 
     public T dbImage(String dbImage) {
@@ -182,7 +186,7 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
     }
 
     public String serverImage() {
-        return serverImage;
+        return Utils.getEnv(TESTCONTAINERS_CONCORD_SERVER_IMAGE, serverImage);
     }
 
     /**
@@ -194,7 +198,7 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
     }
 
     public String agentImage() {
-        return agentImage;
+        return Utils.getEnv(TESTCONTAINERS_CONCORD_AGENT_IMAGE, agentImage);
     }
 
     /**

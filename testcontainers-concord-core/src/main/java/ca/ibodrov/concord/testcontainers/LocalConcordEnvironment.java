@@ -33,10 +33,7 @@ import org.testcontainers.lifecycle.Startable;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
-import java.net.URI;
 import java.net.URL;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -114,7 +111,7 @@ public class LocalConcordEnvironment implements ConcordEnvironment {
             Path conf = prepareConfigurationFile();
             System.setProperty("ollie.conf", conf.toAbsolutePath().toString());
 
-            this.server = ConcordServer.withAutoWiring().start();
+            this.server = ConcordServer.withModules().start();
 
             waitForHttp("http://localhost:" + apiPort() + "/api/v1/server/ping", 60000);
         } catch (Exception e) {

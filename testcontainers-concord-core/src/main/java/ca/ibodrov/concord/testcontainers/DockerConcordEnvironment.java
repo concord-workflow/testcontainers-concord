@@ -21,7 +21,6 @@ package ca.ibodrov.concord.testcontainers;
  */
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import com.walmartlabs.concord.common.Posix;
 import org.slf4j.Logger;
@@ -39,9 +38,9 @@ import org.testcontainers.lifecycle.Startable;
 import org.testcontainers.utility.MountableFile;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.*;
@@ -226,7 +225,7 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
     private static Path prepareConfigurationFile(Path persistentWorkDir, Supplier<String> extraConfigurationSupplier) {
         try {
             Path dst = Files.createTempFile("server", ".dst");
-            String s = Resources.toString(DockerConcordEnvironment.class.getResource("docker/concord.conf"), Charsets.UTF_8);
+            String s = Resources.toString(DockerConcordEnvironment.class.getResource("docker/concord.conf"), StandardCharsets.UTF_8);
             s = s.replace("%%agentToken%%", Utils.randomToken());
             s = s.replace("%%persistentWorkDir%%", persistentWorkDir != null ? persistentWorkDir.toString() : "");
             s = s.replace("%%extra%%", extraConfigurationSupplier != null ? extraConfigurationSupplier.get() : "");
@@ -251,7 +250,7 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
         this.containerListeners.forEach(l -> l.afterStart(type, container));
     }
 
-    private static ImagePullPolicy pullPolicy(Concord opts) {
+    private static ImagePullPolicy pullPolicy(Concord<?> opts) {
         ImagePullPolicy p = opts.pullPolicy();
 
         if (p == null) {

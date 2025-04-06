@@ -35,6 +35,7 @@ public class Projects {
                 .name(projectName)
                 .orgName(orgName)
                 .acceptsRawPayload(Boolean.TRUE)
+                .rawPayloadMode(ProjectEntry.RawPayloadModeEnum.EVERYONE)
                 .visibility(ProjectEntry.VisibilityEnum.PUBLIC);
 
         return projectApi.createOrUpdateProject(orgName, projectEntry);
