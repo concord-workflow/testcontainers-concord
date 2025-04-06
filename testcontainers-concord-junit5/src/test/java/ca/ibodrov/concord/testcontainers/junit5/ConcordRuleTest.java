@@ -22,30 +22,57 @@ package ca.ibodrov.concord.testcontainers.junit5;
 
 import ca.ibodrov.concord.testcontainers.Concord;
 import ca.ibodrov.concord.testcontainers.ConcordProcess;
+import ca.ibodrov.concord.testcontainers.ContainerListener;
+import ca.ibodrov.concord.testcontainers.ContainerType;
 import ca.ibodrov.concord.testcontainers.Payload;
 import com.walmartlabs.concord.client2.ProcessEntry;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.Container;
+
+import static ca.ibodrov.concord.testcontainers.Utils.randomString;
 
 public class ConcordRuleTest {
+
+    private static final Logger log = LoggerFactory.getLogger(ConcordRuleTest.class);
 
     @RegisterExtension
     public static ConcordRule concord = new ConcordRule()
             .mode(Concord.Mode.DOCKER)
+            .containerListener(new ContainerListener() {
+                @Override
+                public void afterStart(ContainerType type, Container<?> container) {
+                    if (type == ContainerType.SERVER) {
+                        log.info("Concord IT server login: {}/#/login?useApiKey=true", concord.apiBaseUrl());
+                        log.info("Concord IT admin token: {}", concord.environment().apiToken());
+                    }
+                }
+            })
             .useLocalMavenRepository(true);
 
     @Test
-    public void testSimpleFlow() throws Exception {
+    void testSimpleFlow() throws Exception {
         String nameValue = "name_" + System.currentTimeMillis();
 
-        String yml = "" +
-                "flows: \n" +
-                "  default:\n" +
-                "    - log: Hello, ${name}!";
+        String orgName = "org_" + randomString();
+        concord.organizations().create(orgName);
+
+        String projectName = "project_" + randomString();
+        concord.projects().create(orgName, projectName);
+
+        String yml = """
+                flows:
+                  default:
+                    - log: Hello, ${name}!
+                """;
 
         ConcordProcess p = concord.processes()
                 .start(new Payload()
                         .concordYml(yml)
+                        .org(orgName)
+                        .project(projectName)
                         .arg("name", nameValue));
 
         p.waitForStatus(ProcessEntry.StatusEnum.FINISHED);

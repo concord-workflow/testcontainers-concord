@@ -122,6 +122,16 @@ public final class Utils {
         return Paths.get(localPath);
     }
 
+    public static String getEnv(String name, String defValue) {
+        String envValue = System.getenv(name);
+
+        if (envValue == null || envValue.isBlank()) {
+            return defValue;
+        } else {
+            return envValue;
+        }
+    }
+
     private Utils() {
     }
 }

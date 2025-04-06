@@ -31,12 +31,26 @@ public class Projects {
     }
 
     public ProjectOperationResponse create(String orgName, String projectName) throws ApiException {
+        return create(orgName, projectName, true); // true to maintain backward compatibility
+    }
+
+    public ProjectOperationResponse create(String orgName, String projectName, boolean allowPayloads) throws ApiException {
         ProjectEntry projectEntry = new ProjectEntry()
                 .name(projectName)
                 .orgName(orgName)
                 .acceptsRawPayload(Boolean.TRUE)
+                .rawPayloadMode(ProjectEntry.RawPayloadModeEnum.TEAM_MEMBERS)
                 .visibility(ProjectEntry.VisibilityEnum.PUBLIC);
 
-        return projectApi.createOrUpdateProject(orgName, projectEntry);
+        var project = projectApi.createOrUpdateProject(orgName, projectEntry);
+
+        if (allowPayloads) {
+            projectApi.updateProjectAccessLevel(orgName, projectName, new ResourceAccessEntry()
+                    .orgName(orgName)
+                    .teamName("default")
+                    .level(ResourceAccessEntry.LevelEnum.OWNER));
+        }
+
+        return project;
     }
 }

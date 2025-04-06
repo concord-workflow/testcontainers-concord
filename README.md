@@ -39,6 +39,17 @@ public class MyTest {
 By default, the DB, the Server and the Agent are started using Docker containers.
 See below for other options.
 
+Server and Agent container image versions can be customized programmatically, or
+overridden using environment variables (handy for testing against alternative
+versions or custom images.
+
+```
+export TESTCONTAINERS_CONCORD_DB_IMAGE=myregistry/library/postgres:10
+export TESTCONTAINERS_CONCORD_SERVER_IMAGE=myregistry/altowner/concord-server:custom-tag
+export TESTCONTAINERS_CONCORD_AGENT_IMAGE=myregistry/myowner/concord-agent:custom-tag
+$ ./mvnw clean install
+```
+
 See [test cases](./src/test/java/ca/ibodrov/concord/testcontainers/RuleTest.java) for
 details.
 

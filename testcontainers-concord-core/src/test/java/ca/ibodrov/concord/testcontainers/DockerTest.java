@@ -23,6 +23,8 @@ package ca.ibodrov.concord.testcontainers;
 import com.walmartlabs.concord.client2.ProcessEntry;
 
 import com.walmartlabs.concord.client2.ProcessListFilter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.Container;
 import org.testcontainers.utility.MountableFile;
 
@@ -31,21 +33,26 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import static ca.ibodrov.concord.testcontainers.Utils.randomString;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class DockerTest {
+class DockerTest {
 
+    private static final Logger log = LoggerFactory.getLogger(DockerTest.class);
     private static Concord<?> concord;
     private static final Path testFile = Paths.get("target/testDir/testFile.txt");
 
     @BeforeAll
-    public static void setUp() {
+    static void setUp() {
         Concord<?> c = new Concord<>()
                 .mode(Concord.Mode.DOCKER)
                 .containerListener(new ContainerListener() {
@@ -75,10 +82,13 @@ public class DockerTest {
         c.start();
 
         concord = c;
+
+        log.info("Concord IT server login: {}/#/login?useApiKey=true", concord.apiBaseUrl());
+        log.info("Concord IT admin token: {}", concord.environment().apiToken());
     }
 
     @AfterAll
-    public static void tearDown() {
+    static void tearDown() {
         if (concord != null) {
             concord.close();
             concord = null;
@@ -86,36 +96,82 @@ public class DockerTest {
     }
 
     @Test
-    public void testApiToken() {
+    void testApiToken() {
         assertNotNull(concord.environment().apiToken());
     }
 
     @Test
-    public void testSimpleFlow() throws Exception {
+    void testSimpleFlow() throws Exception {
+        executeSimpleFlow(payload -> {}); // no project
+    }
+
+    @Test
+    void testSimpleFlowWithProject() throws Exception {
+        String orgName = "org_" + randomString();
+        concord.organizations().create(orgName);
+
+        String projectName = "project_" + randomString();
+        // validate backwards compatibility. default project creation would allow payloads
+        concord.projects().create(orgName, projectName);
+
+        executeSimpleFlow(payload -> payload.org(orgName).project(projectName));
+    }
+
+    @Test
+    void testSimpleFlowWithProjectAndExplicitPayloadSetting() throws Exception {
+        String orgName = "org_" + randomString();
+        concord.organizations().create(orgName);
+
+        String projectName = "project_" + randomString();
+        concord.projects().create(orgName, projectName, true);
+
+        executeSimpleFlow(payload -> payload.org(orgName).project(projectName));
+    }
+
+    @Test
+    void testPayloadInProjectWithoutEnablingPayloads() throws Exception {
+        String orgName = "org_" + randomString();
+        concord.organizations().create(orgName);
+
+        String projectName = "project_" + randomString();
+        concord.projects().create(orgName, projectName, false);
+
+        var ex = assertThrows(Exception.class, () -> executeSimpleFlow(payload -> payload.org(orgName).project(projectName)));
+        assertTrue(ex.getMessage().contains("The project is not accepting raw payloads"),
+                "Expected error for not accepting raw payloads");
+    }
+
+    private void executeSimpleFlow(Consumer<Payload> payloadConsumer) throws Exception {
         String nameValue = "name_" + System.currentTimeMillis();
 
-        String yml = "" +
-                "flows: \n" +
-                "  default:\n" +
-                "    - log: Hello, ${name}!";
+        String yml = """
+                flows:
+                  default:
+                    - log: Hello, ${name}!
+                """;
+
+        var payload = new Payload()
+                .concordYml(yml)
+                .arg("name", nameValue);
+
+        payloadConsumer.accept(payload);
 
         ConcordProcess p = concord.processes()
-                .start(new Payload()
-                        .concordYml(yml)
-                        .arg("name", nameValue));
+                .start(payload);
 
         p.waitForStatus(ProcessEntry.StatusEnum.FINISHED);
         p.assertLog(".*Hello, " + nameValue + ".*");
     }
 
     @Test
-    public void testTags() throws Exception {
+    void testTags() throws Exception {
         String tag = "tag_" + System.currentTimeMillis();
 
-        String yml = "" +
-                "flows: \n" +
-                "  default:\n" +
-                "    - log: Hello, Concord!";
+        String yml = """
+                flows:
+                  default:
+                    - log: Hello, Concord!
+                """;
 
         ConcordProcess p1 = concord.processes()
                 .start(new Payload()
@@ -135,11 +191,12 @@ public class DockerTest {
     }
 
     @Test
-    public void testSecrets() throws Exception {
-        String yml = "" +
-                "flows: \n" +
-                "  default:\n" +
-                "    - log: ${crypto.exportAsString('Default', 'testSecret', null)}";
+    void testSecrets() throws Exception {
+        String yml = """
+                flows:
+                  default:
+                  - log: ${crypto.exportAsString('Default', 'testSecret', null)}
+                """;
 
         String mySecretValue = "Hello, I'm a secret value!";
         concord.secrets().createSecret(NewSecretQuery.builder()
@@ -154,11 +211,12 @@ public class DockerTest {
     }
 
     @Test
-    public void testProcessLogStreaming() throws Exception {
-        String yml = "" +
-                "flows: \n" +
-                "  default:\n" +
-                "    - log: Hello, Concord!";
+    void testProcessLogStreaming() throws Exception {
+        String yml = """
+                flows:
+                  default:
+                    - log: Hello, Concord!
+                """;
 
         ConcordProcess p = concord.processes()
                 .create()
@@ -171,11 +229,12 @@ public class DockerTest {
     }
 
     @Test
-    public void testFilePush() throws Exception {
-        String yml = "" +
-                "flows: \n" +
-                "  default:\n" +
-                "    - log: \"${resource.asString('/tmp/testDir/testFile.txt')}\"";
+    void testFilePush() throws Exception {
+        String yml = """
+                flows:
+                  default:
+                    - log: "${resource.asString('/tmp/testDir/testFile.txt')}"
+                """;
 
         ConcordProcess p = concord.processes()
                 .create()
