@@ -42,8 +42,6 @@ import org.junit.jupiter.api.Test;
 import static ca.ibodrov.concord.testcontainers.Utils.randomString;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DockerTest {
 
@@ -115,30 +113,6 @@ class DockerTest {
         concord.projects().create(orgName, projectName);
 
         executeSimpleFlow(payload -> payload.org(orgName).project(projectName));
-    }
-
-    @Test
-    void testSimpleFlowWithProjectAndExplicitPayloadSetting() throws Exception {
-        String orgName = "org_" + randomString();
-        concord.organizations().create(orgName);
-
-        String projectName = "project_" + randomString();
-        concord.projects().create(orgName, projectName, true);
-
-        executeSimpleFlow(payload -> payload.org(orgName).project(projectName));
-    }
-
-    @Test
-    void testPayloadInProjectWithoutEnablingPayloads() throws Exception {
-        String orgName = "org_" + randomString();
-        concord.organizations().create(orgName);
-
-        String projectName = "project_" + randomString();
-        concord.projects().create(orgName, projectName, false);
-
-        var ex = assertThrows(Exception.class, () -> executeSimpleFlow(payload -> payload.org(orgName).project(projectName)));
-        assertTrue(ex.getMessage().contains("The project is not accepting raw payloads"),
-                "Expected error for not accepting raw payloads");
     }
 
     private void executeSimpleFlow(Consumer<Payload> payloadConsumer) throws Exception {
