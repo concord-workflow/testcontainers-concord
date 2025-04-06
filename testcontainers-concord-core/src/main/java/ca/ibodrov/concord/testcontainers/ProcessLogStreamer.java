@@ -85,7 +85,7 @@ public class ProcessLogStreamer implements Runnable {
 
                 sleep(REQUEST_DELAY);
             } catch (Exception e) {
-                log.warn("Error while streaming the process' ({}) log: {}. Retrying in {}ms...", instanceId, e.getMessage(), ERROR_DELAY);
+                log.warn("Error while streaming process log (instanceId={}): {}. Retrying in {}ms...", instanceId, e.getMessage(), ERROR_DELAY);
                 sleep(ERROR_DELAY);
             }
         }

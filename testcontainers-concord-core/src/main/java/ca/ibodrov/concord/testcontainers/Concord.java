@@ -40,6 +40,7 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
 
     private boolean startAgent = true;
     private boolean streamAgentLogs;
+    private boolean streamDbLogs;
     private boolean streamServerLogs;
 
     private boolean useMavenCentral = true;
@@ -52,6 +53,8 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
     private String dbImage = "library/postgres:10";
     private String agentImage = "walmartlabs/concord-agent";
     private String serverImage = "walmartlabs/concord-server";
+
+    private String dbInitScriptPath;
 
     private String apiBaseUrl;
     private String apiToken;
@@ -185,6 +188,19 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
         return (T) this;
     }
 
+    public String dbInitScriptPath() {
+        return dbInitScriptPath;
+    }
+
+    /**
+     * Resource path to the database initialization script.
+     * If set, the script will be executed before the server starts.
+     */
+    public T dbInitScriptPath(String dbInitScriptPath) {
+        this.dbInitScriptPath = dbInitScriptPath;
+        return (T) this;
+    }
+
     public String serverImage() {
         return Utils.getEnv(TESTCONTAINERS_CONCORD_SERVER_IMAGE, serverImage);
     }
@@ -303,6 +319,18 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
      */
     public T extraMavenRepositories(List<Map<String, Object>> extraMavenRepositories) {
         this.extraMavenRepositories = extraMavenRepositories;
+        return (T) this;
+    }
+
+    public boolean streamDbLogs() {
+        return streamDbLogs;
+    }
+
+    /**
+     * Stream the database logs to the console.
+     */
+    public T streamDbLogs(boolean streamDbLogs) {
+        this.streamDbLogs = streamDbLogs;
         return (T) this;
     }
 
