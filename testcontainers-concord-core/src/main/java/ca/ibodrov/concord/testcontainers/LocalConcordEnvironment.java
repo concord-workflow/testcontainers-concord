@@ -28,6 +28,7 @@ import com.walmartlabs.concord.server.ConcordServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.lifecycle.Startable;
 
 import java.io.IOException;
@@ -66,6 +67,16 @@ public class LocalConcordEnvironment implements ConcordEnvironment {
                 .withEnv("POSTGRES_PASSWORD", "q1")
                 .withNetworkAliases("db")
                 .withExposedPorts(5432);
+
+        String dbInitScriptPath = opts.dbInitScriptPath();
+        if (dbInitScriptPath != null) {
+            DatabaseInit.addInitScriptFromClassPath(db, dbInitScriptPath, "init.sql");
+        }
+
+        if (opts.streamDbLogs()) {
+            Slf4jLogConsumer dbLogConsumer = new Slf4jLogConsumer(log);
+            db.withLogConsumer(dbLogConsumer);
+        }
 
         // in the LOCAL mode there's only one container - the DB
         // so it's the only thing that can "depend on" anything
