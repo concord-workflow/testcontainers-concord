@@ -31,7 +31,6 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 public class ConcordProcess {
 
@@ -213,16 +212,12 @@ public class ConcordProcess {
     }
 
     public List<String> getLogLines(Predicate<String> lineFilter) throws ApiException {
-        try {
-            return IOUtils.readLines(
-                    new InputStreamReader(
-                            new ByteArrayInputStream(getLog())))
-                    .stream()
-                    .filter(lineFilter)
-                    .collect(Collectors.toList());
-        } catch (IOException ioex) {
-            throw new RuntimeException("Failed to read log lines", ioex);
-        }
+        return IOUtils.readLines(
+                new InputStreamReader(
+                        new ByteArrayInputStream(getLog())))
+                .stream()
+                .filter(lineFilter)
+                .toList();
     }
 
     public byte[] getLog() throws ApiException {
