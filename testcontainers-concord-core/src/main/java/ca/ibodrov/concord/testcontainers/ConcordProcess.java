@@ -214,14 +214,13 @@ public class ConcordProcess {
 
     public List<String> getLogLines(Predicate<String> lineFilter) throws ApiException {
         try {
-            return IOUtils.readLines(
-                    new InputStreamReader(
-                            new ByteArrayInputStream(getLog())))
+            byte[] log = getLog();
+            return IOUtils.readLines(new InputStreamReader(new ByteArrayInputStream(log)))
                     .stream()
                     .filter(lineFilter)
                     .collect(Collectors.toList());
-        } catch (IOException ioex) {
-            throw new RuntimeException("Failed to read log lines", ioex);
+        } catch (UncheckedIOException e) {
+            throw new RuntimeException("Failed to read log lines", e);
         }
     }
 
