@@ -64,7 +64,7 @@ public class Secrets {
         return api.createSecret(query.org(), m);
     }
 
-    public boolean isExists(String orgName, String secretName) throws ApiException {
+    public boolean exists(String orgName, String secretName) throws ApiException {
         SecretsV2Api secretsApi = new SecretsV2Api(apiClient);
         try {
             return secretsApi.getSecret(orgName, secretName) != null;
