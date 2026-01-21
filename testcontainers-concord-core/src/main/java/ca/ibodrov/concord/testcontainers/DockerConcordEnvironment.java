@@ -130,8 +130,8 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
             agent.withFileSystemBind(opts.sharedContainerDir().toString(), opts.sharedContainerDir().toString());
         }
 
-        if (opts.getAgentBindMounts() != null) {
-            opts.getAgentBindMounts().forEach(m -> agent.withFileSystemBind(m.getSource(), m.getDest()));
+        if (opts.agentBindMounts() != null) {
+            opts.agentBindMounts().forEach(m -> agent.withFileSystemBind(m.getSource(), m.getDest()));
         }
 
         if (opts.agentEnvironment() != null) {
@@ -225,6 +225,7 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
     private static Path prepareConfigurationFile(Path persistentWorkDir, Supplier<String> extraConfigurationSupplier) {
         try {
             Path dst = Files.createTempFile("server", ".dst");
+            dst.toFile().deleteOnExit();
             String s = Resources.toString(DockerConcordEnvironment.class.getResource("docker/concord.conf"), StandardCharsets.UTF_8);
             s = s.replace("%%agentToken%%", Utils.randomToken());
             s = s.replace("%%persistentWorkDir%%", persistentWorkDir != null ? persistentWorkDir.toString() : "");
@@ -322,6 +323,7 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
 
         try {
             Path dst = Files.createTempFile("mvn", ".json");
+            dst.toFile().deleteOnExit();
             Files.write(dst, new ObjectMapper().writeValueAsBytes(m), StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE);
             Files.setPosixFilePermissions(dst, PosixFilePermissions.fromString("rw-r--r--"));
             return dst;
