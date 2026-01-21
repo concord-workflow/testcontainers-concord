@@ -541,7 +541,7 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
         return (T) this;
     }
 
-    public List<MountPoint> getAgentBindMounts() {
+    public List<MountPoint> agentBindMounts() {
         return this.agentBindMounts;
     }
 
