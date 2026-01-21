@@ -166,6 +166,7 @@ public class LocalConcordEnvironment implements ConcordEnvironment {
 
     private Path prepareConfigurationFile() throws IOException {
         Path dst = Files.createTempFile("server", ".dst");
+        dst.toFile().deleteOnExit();
 
         String s = Resources.toString(LocalConcordEnvironment.class.getResource("local/concord.conf"), Charsets.UTF_8);
         s = s.replaceAll("%%extra%%", extraConfigurationSupplier.get());
