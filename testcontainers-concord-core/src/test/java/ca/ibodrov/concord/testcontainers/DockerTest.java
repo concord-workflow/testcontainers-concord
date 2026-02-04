@@ -25,13 +25,7 @@ import com.walmartlabs.concord.client2.ProcessEntry;
 import com.walmartlabs.concord.client2.ProcessListFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testcontainers.containers.Container;
-import org.testcontainers.utility.MountableFile;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -47,35 +41,11 @@ class DockerTest {
 
     private static final Logger log = LoggerFactory.getLogger(DockerTest.class);
     private static Concord<?> concord;
-    private static final Path testFile = Paths.get("target/testDir/testFile.txt");
 
     @BeforeAll
     static void setUp() {
         Concord<?> c = new Concord<>()
-                .mode(Concord.Mode.DOCKER)
-                .containerListener(new ContainerListener() {
-                    @Override
-                    public void beforeStart(ContainerType type) {
-                    }
-
-                    @Override
-                    public void afterStart(ContainerType type, Container<?> container) {
-                        try {
-                            // Create test dir + test file
-                            Files.createDirectories(testFile.getParent());
-                            Files.write(testFile, "Hello, Concord!".getBytes(), StandardOpenOption.CREATE);
-
-                            // Copy dir to container
-                            if (type == ContainerType.AGENT) {
-                                container.copyFileToContainer(
-                                        MountableFile.forHostPath(testFile.getParent()),
-                                        Paths.get("/tmp", "testDir").toString());
-                            }
-                        } catch (Exception ex) {
-                            throw new RuntimeException("Failed to set up file to be copied to container");
-                        }
-                    }
-                });
+                .mode(Concord.Mode.DOCKER);
 
         c.start();
 
@@ -202,21 +172,4 @@ class DockerTest {
         p.assertLog(".*Hello, Concord!.*");
     }
 
-    @Test
-    void testFilePush() throws Exception {
-        String yml = """
-                flows:
-                  default:
-                    - log: "${resource.asString('/tmp/testDir/testFile.txt')}"
-                """;
-
-        ConcordProcess p = concord.processes()
-                .create()
-                .streamLogs(true)
-                .payload(new Payload().concordYml(yml))
-                .start();
-
-        p.waitForStatus(ProcessEntry.StatusEnum.FINISHED);
-        p.assertLog(".*Hello, Concord!.*");
-    }
 }

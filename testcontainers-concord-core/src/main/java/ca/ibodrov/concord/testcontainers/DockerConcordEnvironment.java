@@ -52,6 +52,7 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
 
     private static final String CONCORD_CFG_FILE = "/opt/concord/concord.conf";
 
+    private final Network network;
     private final GenericContainer<?> db;
     private final GenericContainer<?> server;
     private final GenericContainer<?> agent;
@@ -71,12 +72,12 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
 
         ImagePullPolicy pullPolicy = pullPolicy(opts);
 
-        Network network = Network.newNetwork();
+        this.network = Network.newNetwork();
 
         this.db = new GenericContainer<>(opts.dbImage())
                 .withEnv("POSTGRES_PASSWORD", "q1")
                 .withNetworkAliases("db")
-                .withNetwork(network);
+                .withNetwork(this.network);
 
         this.server = new GenericContainer<>(opts.serverImage())
                 .dependsOn(db)
@@ -85,7 +86,7 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
                 .withEnv("CONCORD_CFG_FILE", CONCORD_CFG_FILE)
                 .withCopyFileToContainer(MountableFile.forHostPath(configFile, 0644), CONCORD_CFG_FILE)
                 .withNetworkAliases("server")
-                .withNetwork(network)
+                .withNetwork(this.network)
                 .withExposedPorts(8001)
                 .waitingFor(Wait.forHttp("/api/v1/server/ping"));
 
@@ -115,7 +116,7 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
         this.agent = new GenericContainer<>(opts.agentImage())
                 .dependsOn(server)
                 .withImagePullPolicy(pullPolicy)
-                .withNetwork(network)
+                .withNetwork(this.network)
                 .withEnv("SERVER_API_BASE_URL", "http://server:8001")
                 .withEnv("SERVER_WEBSOCKET_URL", "ws://server:8001/websocket")
                 .withEnv("CONCORD_CFG_FILE", CONCORD_CFG_FILE)
@@ -220,6 +221,7 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
         this.agent.stop();
         this.server.stop();
         this.db.stop();
+        this.network.close();
     }
 
     private static Path prepareConfigurationFile(Path persistentWorkDir, Supplier<String> extraConfigurationSupplier) {
