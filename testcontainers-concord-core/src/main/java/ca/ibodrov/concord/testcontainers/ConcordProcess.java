@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.time.Duration;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -36,6 +37,7 @@ import java.util.stream.Collectors;
 public class ConcordProcess {
 
     private static final Logger log = LoggerFactory.getLogger(ConcordProcess.class);
+    private static final Duration DEFAULT_TIMEOUT = Duration.ofMinutes(5);
 
     private final ApiClient client;
     private final UUID instanceId;
@@ -60,11 +62,22 @@ public class ConcordProcess {
     /**
      * Waits for the process to reach the specified status. Throws an exception if
      * the process ends up in an unexpected status.
+     * Uses the default timeout of 5 minutes.
      *
      * @return the process queue entry for the process.
      */
     public ProcessEntry expectStatus(StatusEnum status, StatusEnum... more) throws ApiException {
-        ProcessEntry pe = waitForStatus(status, more);
+        return expectStatus(DEFAULT_TIMEOUT, status, more);
+    }
+
+    /**
+     * Waits for the process to reach the specified status. Throws an exception if
+     * the process ends up in an unexpected status or the timeout is exceeded.
+     *
+     * @return the process queue entry for the process.
+     */
+    public ProcessEntry expectStatus(Duration timeout, StatusEnum status, StatusEnum... more) throws ApiException {
+        ProcessEntry pe = waitForStatus(timeout, status, more);
 
         if (!Utils.isSame(pe.getStatus(), status, more)) {
             throw new IllegalStateException("Unexpected status of the process: " + pe.getStatus());
@@ -75,13 +88,33 @@ public class ConcordProcess {
 
     /**
      * Waits for the process to reach the specified or one of the final statuses.
+     * Uses the default timeout of 5 minutes.
      *
      * @return the process queue entry for the process.
      */
     public ProcessEntry waitForStatus(StatusEnum status, StatusEnum... more) throws ApiException {
+        return waitForStatus(DEFAULT_TIMEOUT, status, more);
+    }
+
+    /**
+     * Waits for the process to reach the specified or one of the final statuses.
+     *
+     * @return the process queue entry for the process.
+     */
+    public ProcessEntry waitForStatus(Duration timeout, StatusEnum status, StatusEnum... more) throws ApiException {
         ProcessV2Api api = new ProcessV2Api(client);
 
-        return waitForStatus(() -> Collections.singletonList(api.getProcess(instanceId, Collections.emptySet())), status, more);
+        return waitForStatus(timeout, () -> Collections.singletonList(api.getProcess(instanceId, Collections.emptySet())), status, more);
+    }
+
+    /**
+     * Waits for the child process to reach the specified or one of the final statuses.
+     * Uses the default timeout of 5 minutes.
+     *
+     * @return the process queue entry for the child process.
+     */
+    public ProcessEntry waitForChildStatus(StatusEnum status, StatusEnum... more) throws ApiException {
+        return waitForChildStatus(DEFAULT_TIMEOUT, status, more);
     }
 
     /**
@@ -89,9 +122,9 @@ public class ConcordProcess {
      *
      * @return the process queue entry for the child process.
      */
-    public ProcessEntry waitForChildStatus(StatusEnum status, StatusEnum... more) throws ApiException {
+    public ProcessEntry waitForChildStatus(Duration timeout, StatusEnum status, StatusEnum... more) throws ApiException {
         ProcessApi api = new ProcessApi(client);
-        return waitForStatus(() -> api.listSubprocesses(instanceId, null), status, more);
+        return waitForStatus(timeout, () -> api.listSubprocesses(instanceId, null), status, more);
     }
 
     /**
@@ -233,10 +266,19 @@ public class ConcordProcess {
         }
     }
 
-    private static ProcessEntry waitForStatus(ProcessSupplier processSupplier, StatusEnum status, StatusEnum... more) throws ApiException {
+    private static ProcessEntry waitForStatus(Duration timeout, ProcessSupplier processSupplier, StatusEnum status, StatusEnum... more) throws ApiException {
         int retries = 10;
+        long startTime = System.currentTimeMillis();
+        long timeoutMillis = timeout.toMillis();
 
         while (true) {
+            long elapsed = System.currentTimeMillis() - startTime;
+            if (elapsed >= timeoutMillis) {
+                throw new IllegalStateException("Timeout waiting for process status. Expected: " + status +
+                        (more.length > 0 ? " or " + Arrays.toString(more) : "") +
+                        ". Elapsed: " + elapsed + "ms");
+            }
+
             try {
                 List<ProcessEntry> processes = processSupplier.get();
                 for (ProcessEntry pe : processes) {
