@@ -26,9 +26,13 @@ import org.testcontainers.images.ImagePullPolicy;
 import org.testcontainers.images.PullPolicy;
 import org.testcontainers.lifecycle.Startable;
 
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
+
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 @SuppressWarnings({"unchecked"})
@@ -65,6 +69,7 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
     private Path sharedContainerDir;
     private Path persistentWorkDir;
     private boolean ignoreSslErrors;
+    private boolean hostAccessible;
 
     private List<ContainerListener> containerListeners;
 
@@ -73,6 +78,8 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
     private List<MountPoint> agentBindMounts;
 
     private Map<String, String> agentEnvironment;
+
+    private Function<Network, List<GenericContainer<?>>> extraContainerSupplier;
 
     /**
      * Starts a Concord instance using the current configuration.
@@ -443,6 +450,22 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
         return (T) this;
     }
 
+    public boolean hostAccessible() {
+        return hostAccessible;
+    }
+
+    /**
+     * If set to {@code true} the Server and Agent containers will be configured
+     * with access to the test host using {@code host.testcontainers.internal}.
+     * This allows containers to connect to services running on the host machine
+     * via ports exposed with {@link org.testcontainers.Testcontainers#exposeHostPorts(int...)}.
+     * Only for {@link Mode#DOCKER}.
+     */
+    public T hostAccessible(boolean hostAccessible) {
+        this.hostAccessible = hostAccessible;
+        return (T) this;
+    }
+
     /**
      * Returns the test host's address that can be used to connect
      * to the test host's services from inside a container.
@@ -504,6 +527,22 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
 
     public Map<String, String> agentEnvironment() {
         return this.agentEnvironment;
+    }
+
+    /**
+     * Provides a supplier that creates additional containers to run within the same
+     * Docker network as the Concord environment.
+     * Only supported in {@link Mode#DOCKER}.
+     *
+     * @param supplier a function that receives the Docker network and returns a list of containers to start
+     */
+    public T extraContainerSupplier(Function<Network, List<GenericContainer<?>>> supplier) {
+        this.extraContainerSupplier = supplier;
+        return (T) this;
+    }
+
+    Function<Network, List<GenericContainer<?>>> extraContainerSupplier() {
+        return extraContainerSupplier;
     }
 
     /**

@@ -174,9 +174,13 @@ public class LocalConcordEnvironment implements ConcordEnvironment {
         return dst;
     }
 
-    private static void validate(Concord opts) {
+    private static void validate(Concord<?> opts) {
         if (opts.apiToken() != null) {
-            log.warn("Can't specify 'apiToken' value when using Mode.DOCKER");
+            log.warn("Can't specify 'apiToken' value when using Mode.LOCAL");
+        }
+
+        if (opts.extraContainerSupplier() != null) {
+            log.warn("extraContainerSupplier is only supported in DOCKER mode");
         }
     }
 

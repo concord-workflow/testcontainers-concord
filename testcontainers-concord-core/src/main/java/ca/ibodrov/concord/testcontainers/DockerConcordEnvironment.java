@@ -44,6 +44,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class DockerConcordEnvironment implements ConcordEnvironment {
@@ -60,6 +61,8 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
     private final boolean startAgent;
 
     private final List<ContainerListener> containerListeners;
+
+    private final List<GenericContainer<?>> extraContainers;
 
     private String apiToken;
 
@@ -79,9 +82,12 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
                 .withNetworkAliases("db")
                 .withNetwork(this.network);
 
+        boolean hostAccessible = opts.hostAccessible();
+
         this.server = new GenericContainer<>(opts.serverImage())
                 .dependsOn(db)
                 .withImagePullPolicy(pullPolicy)
+                .withAccessToHost(hostAccessible)
                 .withEnv("DB_URL", "jdbc:postgresql://db:5432/postgres")
                 .withEnv("CONCORD_CFG_FILE", CONCORD_CFG_FILE)
                 .withCopyFileToContainer(MountableFile.forHostPath(configFile, 0644), CONCORD_CFG_FILE)
@@ -116,6 +122,7 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
         this.agent = new GenericContainer<>(opts.agentImage())
                 .dependsOn(server)
                 .withImagePullPolicy(pullPolicy)
+                .withAccessToHost(hostAccessible)
                 .withNetwork(this.network)
                 .withEnv("SERVER_API_BASE_URL", "http://server:8001")
                 .withEnv("SERVER_WEBSOCKET_URL", "ws://server:8001/websocket")
@@ -180,6 +187,13 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
         }
 
         this.containerListeners = opts.containerListeners() != null ? new ArrayList<>(opts.containerListeners()) : Collections.emptyList();
+
+        Function<Network, List<GenericContainer<?>>> extraContainerSupplier = opts.extraContainerSupplier();
+        if (extraContainerSupplier != null) {
+            this.extraContainers = extraContainerSupplier.apply(this.network);
+        } else {
+            this.extraContainers = Collections.emptyList();
+        }
     }
 
     @Override
@@ -208,6 +222,10 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
 
     @Override
     public void start() {
+        for (GenericContainer<?> c : this.extraContainers) {
+            c.start();
+        }
+
         startContainer(ContainerType.DB, this.db);
         startContainer(ContainerType.SERVER, this.server);
 
@@ -221,6 +239,11 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
         this.agent.stop();
         this.server.stop();
         this.db.stop();
+
+        for (GenericContainer<?> c : this.extraContainers) {
+            c.stop();
+        }
+
         this.network.close();
     }
 

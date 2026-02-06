@@ -20,14 +20,23 @@ package ca.ibodrov.concord.testcontainers;
  * =====
  */
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.URI;
 
 public class RemoteConcordEnvironment implements ConcordEnvironment {
 
+    private static final Logger log = LoggerFactory.getLogger(RemoteConcordEnvironment.class);
+
     private final URI baseUrl;
     private final String apiToken;
 
-    public RemoteConcordEnvironment(Concord opts) {
+    public RemoteConcordEnvironment(Concord<?> opts) {
+        if (opts.extraContainerSupplier() != null) {
+            log.warn("extraContainerSupplier is only supported in DOCKER mode");
+        }
+
         this.baseUrl = URI.create(opts.apiBaseUrl());
         this.apiToken = opts.apiToken();
     }
