@@ -53,6 +53,22 @@ $ ./mvnw clean install
 See [test cases](./src/test/java/ca/ibodrov/concord/testcontainers/RuleTest.java) for
 details.
 
+### Database initialization and logs
+
+In Docker and local modes, use `dbInitScriptPath` to execute a classpath SQL
+resource before the Concord Server starts, and `streamDbLogs` to stream database
+logs through SLF4J:
+
+```java
+Concord<?> concord = new Concord<>()
+        .dbInitScriptPath("/db/init.sql")
+        .streamDbLogs(true);
+```
+
+Place the script at `src/test/resources/db/init.sql`. It runs as part of
+PostgreSQL's initialization of a fresh database, before Concord's schema
+migrations. Database log streaming is disabled by default.
+
 ## Remote Mode
 
 In this mode `testcontainers-concord` connect to a remove Concord instance.
