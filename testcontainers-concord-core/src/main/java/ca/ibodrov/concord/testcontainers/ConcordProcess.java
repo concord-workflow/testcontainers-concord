@@ -29,8 +29,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.net.http.HttpRequest;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -38,6 +45,11 @@ public class ConcordProcess {
 
     private static final Logger log = LoggerFactory.getLogger(ConcordProcess.class);
     private static final Duration DEFAULT_TIMEOUT = Duration.ofMinutes(5);
+    private static final ExecutorService STATUS_WAIT_EXECUTOR = Executors.newCachedThreadPool(r -> {
+        Thread thread = new Thread(r, "concord-status-wait");
+        thread.setDaemon(true);
+        return thread;
+    });
 
     private final ApiClient client;
     private final UUID instanceId;
@@ -73,6 +85,7 @@ public class ConcordProcess {
     /**
      * Waits for the process to reach the specified status. Throws an exception if
      * the process ends up in an unexpected status or the timeout is exceeded.
+     * The timeout covers HTTP requests, response-body reads, and polling delays.
      *
      * @return the process queue entry for the process.
      */
@@ -98,13 +111,13 @@ public class ConcordProcess {
 
     /**
      * Waits for the process to reach the specified or one of the final statuses.
+     * The timeout covers HTTP requests, response-body reads, and polling delays.
+     * Outstanding work is cancelled and an {@link IllegalStateException} is thrown on expiration.
      *
      * @return the process queue entry for the process.
      */
     public ProcessEntry waitForStatus(Duration timeout, StatusEnum status, StatusEnum... more) throws ApiException {
-        ProcessV2Api api = new ProcessV2Api(client);
-
-        return waitForStatus(timeout, () -> Collections.singletonList(api.getProcess(instanceId, Collections.emptySet())), status, more);
+        return waitForStatus(timeout, false, status, more);
     }
 
     /**
@@ -119,12 +132,13 @@ public class ConcordProcess {
 
     /**
      * Waits for the child process to reach the specified or one of the final statuses.
+     * The timeout covers HTTP requests, response-body reads, and polling delays.
+     * Outstanding work is cancelled and an {@link IllegalStateException} is thrown on expiration.
      *
      * @return the process queue entry for the child process.
      */
     public ProcessEntry waitForChildStatus(Duration timeout, StatusEnum status, StatusEnum... more) throws ApiException {
-        ProcessApi api = new ProcessApi(client);
-        return waitForStatus(timeout, () -> api.listSubprocesses(instanceId, null), status, more);
+        return waitForStatus(timeout, true, status, more);
     }
 
     /**
@@ -266,21 +280,82 @@ public class ConcordProcess {
         }
     }
 
-    private static ProcessEntry waitForStatus(Duration timeout, ProcessSupplier processSupplier, StatusEnum status, StatusEnum... more) throws ApiException {
-        int retries = 10;
-        long startTime = System.currentTimeMillis();
-        long timeoutMillis = timeout.toMillis();
+    private ProcessEntry waitForStatus(Duration timeout, boolean childStatus, StatusEnum status, StatusEnum... more) throws ApiException {
+        long startTime = System.nanoTime();
+        long timeoutNanos = timeout.toNanos();
+        if (timeoutNanos <= 0) {
+            throw statusTimeout(startTime, status, more);
+        }
 
-        while (true) {
-            long elapsed = System.currentTimeMillis() - startTime;
-            if (elapsed >= timeoutMillis) {
-                throw new IllegalStateException("Timeout waiting for process status. Expected: " + status +
-                        (more.length > 0 ? " or " + Arrays.toString(more) : "") +
-                        ". Elapsed: " + elapsed + "ms");
+        // Cover synchronous HTTP calls and response-body reads without mutating the shared client.
+        StatusRequest request = new StatusRequest();
+        Future<ProcessEntry> result = STATUS_WAIT_EXECUTOR.submit(() -> {
+            ApiClient statusClient = request.createClient(client);
+            ProcessSupplier supplier;
+            if (childStatus) {
+                ProcessApi api = new ProcessApi(statusClient);
+                supplier = () -> api.listSubprocesses(instanceId, null);
+            } else {
+                ProcessV2Api api = new ProcessV2Api(statusClient);
+                supplier = () -> Collections.singletonList(api.getProcess(instanceId, Collections.emptySet()));
             }
+            return pollForStatus(request, supplier, status, more);
+        });
+        try {
+            long remaining = timeoutNanos - (System.nanoTime() - startTime);
+            if (remaining <= 0) {
+                throw statusTimeout(startTime, status, more);
+            }
+            ProcessEntry entry = result.get(remaining, TimeUnit.NANOSECONDS);
+            if (System.nanoTime() - startTime >= timeoutNanos) {
+                throw statusTimeout(startTime, status, more);
+            }
+            return entry;
+        } catch (TimeoutException e) {
+            throw statusTimeout(startTime, status, more);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while waiting for process status", e);
+        } catch (ExecutionException e) {
+            if (System.nanoTime() - startTime >= timeoutNanos) {
+                throw statusTimeout(startTime, status, more);
+            }
+            Throwable cause = e.getCause();
+            if (cause instanceof ApiException) {
+                throw (ApiException) cause;
+            }
+            if (cause instanceof RuntimeException) {
+                throw (RuntimeException) cause;
+            }
+            if (cause instanceof Error) {
+                throw (Error) cause;
+            }
+            throw new IllegalStateException(cause);
+        } finally {
+            request.cancelled = true;
+            result.cancel(true);
+            request.close();
+        }
+    }
+
+    private static IllegalStateException statusTimeout(long startTime, StatusEnum status, StatusEnum... more) {
+        long elapsed = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
+        return new IllegalStateException("Timeout waiting for process status. Expected: " + status +
+                (more.length > 0 ? " or " + Arrays.toString(more) : "") +
+                ". Elapsed: " + elapsed + "ms");
+    }
+
+    private static ProcessEntry pollForStatus(StatusRequest request, ProcessSupplier processSupplier, StatusEnum status, StatusEnum... more) throws ApiException {
+        int retries = 10;
+        while (!request.cancelled && !Thread.currentThread().isInterrupted()) {
 
             try {
-                List<ProcessEntry> processes = processSupplier.get();
+                List<ProcessEntry> processes;
+                try {
+                    processes = processSupplier.get();
+                } finally {
+                    request.closeResponseBody();
+                }
                 for (ProcessEntry pe : processes) {
                     if (pe.getStatus() == StatusEnum.FINISHED || pe.getStatus() == StatusEnum.FAILED || pe.getStatus() == StatusEnum.CANCELLED) {
                         return pe;
@@ -291,7 +366,7 @@ public class ConcordProcess {
                     }
                 }
             } catch (ApiException e) {
-                if (--retries < 0) {
+                if (request.cancelled || Thread.currentThread().isInterrupted() || --retries < 0) {
                     throw e;
                 }
 
@@ -304,8 +379,10 @@ public class ConcordProcess {
                 Thread.sleep(500);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
+                throw new IllegalStateException("Interrupted while waiting for process status", e);
             }
         }
+        throw new IllegalStateException("Interrupted while waiting for process status");
     }
 
     private static void assertEquals(String msg, Object expected, Object actual) {
@@ -326,6 +403,59 @@ public class ConcordProcess {
         }
 
         throw new IllegalStateException(msg);
+    }
+
+    private static class StatusRequest implements AutoCloseable {
+
+        private volatile boolean cancelled;
+        private InputStream responseBody;
+
+        private ApiClient createClient(ApiClient source) {
+            ApiClient client = new ApiClient(source.getHttpClient()) {
+                @Override
+                public HttpRequest.Builder requestBuilder() {
+                    return source.requestBuilder();
+                }
+
+                @Override
+                public ObjectMapper getObjectMapper() {
+                    return source.getObjectMapper();
+                }
+            }.setBaseUrl(source.getBaseUri())
+                    .setReadTimeout(source.getReadTimeout())
+                    .setRequestInterceptor(source.getRequestInterceptor())
+                    .setAsyncResponseInterceptor(source.getAsyncResponseInterceptor());
+            var responseInterceptor = source.getResponseInterceptor();
+            client.setResponseInterceptor(response -> {
+                InputStream body = response.body();
+                synchronized (this) {
+                    if (!cancelled) {
+                        responseBody = body;
+                    }
+                }
+                if (cancelled) {
+                    IOUtils.closeQuietly(body);
+                } else if (responseInterceptor != null) {
+                    responseInterceptor.accept(response);
+                }
+            });
+            return client;
+        }
+
+        private void closeResponseBody() {
+            InputStream body;
+            synchronized (this) {
+                body = responseBody;
+                responseBody = null;
+            }
+            IOUtils.closeQuietly(body);
+        }
+
+        @Override
+        public void close() {
+            cancelled = true;
+            closeResponseBody();
+        }
     }
 
     private interface ProcessSupplier {
