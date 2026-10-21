@@ -10,7 +10,7 @@ compiled with `--release 25`, and CI runs on Temurin 25. The Maven wrapper uses
 Maven 3.9; select a JDK 25 installation with `JAVA_HOME` before running `./mvnw`.
 
 This requirement applies to the test JVM. Concord Server and Agent Docker images
-keep their own Java runtimes; CI continues to pin those images to `2.25.1`.
+keep their own Java runtimes; CI pins those images to `2.46.0`.
 
 Payload text and generated configuration files use UTF-8.
 
@@ -55,8 +55,15 @@ export TESTCONTAINERS_CONCORD_AGENT_IMAGE=myregistry/myowner/concord-agent:custo
 $ ./mvnw clean install
 ```
 
-CI pins the Server and Agent images to `2.25.1`, matching `concord.version` in
+CI pins the Server and Agent images to `2.46.0`, matching `concord.version` in
 `pom.xml`. Update these workflow overrides when upgrading that dependency.
+
+The generated Docker configuration sets `websockets.requirePermission = false`
+for its userless agent token, following Concord's
+[2.45 migration guidance](https://github.com/walmartlabs/concord/blob/2.46.0/CHANGELOG.md#2450---2026-08-24).
+API-key authentication remains required, but the additional per-user
+`agentWebsocket` permission check is disabled for this test server. Remote servers
+are not reconfigured.
 
 See [test cases](./testcontainers-concord-junit5/src/test/java/ca/ibodrov/concord/testcontainers/junit5/ConcordRuleTest.java) for
 details.
@@ -118,7 +125,12 @@ public class MyTest {
 
 ## Local Mode
 
-Local mode starts Concord Server and Concord Agent in the current JVM:
+Local mode is intended to start Concord Server and Concord Agent in the current JVM.
+
+**Known limitation:** upgrading to Concord `2.46.0` does not fix local startup.
+The current bootstrap supplies no modules to `ConcordServer.withModules()`, so it
+fails Guice configuration with missing server bindings. The local integration
+test remains disabled.
 
 ```java
 public class MyTest {

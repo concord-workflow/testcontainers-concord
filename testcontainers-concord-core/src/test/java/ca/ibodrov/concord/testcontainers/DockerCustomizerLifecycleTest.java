@@ -41,8 +41,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class DockerCustomizerLifecycleTest {
 
     private static final String DB = "postgres:10";
-    private static final String SERVER = "walmartlabs/concord-server:2.25.1";
-    private static final String AGENT = "walmartlabs/concord-agent:2.25.1";
+    private static final String SERVER = "walmartlabs/concord-server:2.46.0";
+    private static final String AGENT = "walmartlabs/concord-agent:2.46.0";
 
     @Test
     @Timeout(value = 8, unit = TimeUnit.MINUTES)

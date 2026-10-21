@@ -36,6 +36,6 @@ jobs:
 
       - name: Build and test with Maven
         env:
-          TESTCONTAINERS_CONCORD_SERVER_IMAGE: walmartlabs/concord-server:2.25.1
-          TESTCONTAINERS_CONCORD_AGENT_IMAGE: walmartlabs/concord-agent:2.25.1
+          TESTCONTAINERS_CONCORD_SERVER_IMAGE: walmartlabs/concord-server:2.46.0
+          TESTCONTAINERS_CONCORD_AGENT_IMAGE: walmartlabs/concord-agent:2.46.0
         run: ./mvnw -B clean install
