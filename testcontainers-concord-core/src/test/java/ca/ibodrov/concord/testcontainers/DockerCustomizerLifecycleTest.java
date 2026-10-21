@@ -25,13 +25,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.lifecycle.Startable;
 import org.testcontainers.utility.DockerImageName;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -48,11 +46,9 @@ class DockerCustomizerLifecycleTest {
 
     @Test
     @Timeout(value = 8, unit = TimeUnit.MINUTES)
-    void customizesEnabledContainersBeforeDependenciesAndKeepsListenerOrder() throws Exception {
-        List<String> callbacks = new ArrayList<>();
+    void customizesEnabledContainersInOrderBeforeStartup() throws Exception {
         List<String> events = new ArrayList<>();
         AtomicReference<GenericContainer<?>> database = new AtomicReference<>();
-        AtomicInteger dependencyStarts = new AtomicInteger();
         try (GenericContainer<?> dependency = new GenericContainer<>(DockerImageName.parse("alpine:3.20"))
                 .withCommand("sh", "-c", "sleep 600")) {
             Concord<?> concord = new Concord<>()
@@ -60,28 +56,17 @@ class DockerCustomizerLifecycleTest {
                     .serverImage(SERVER)
                     .agentImage(AGENT)
                     .startAgent(false)
-                    .dependsOn(new Startable() {
-                        @Override
-                        public void start() {
-                            dependency.start();
-                            dependencyStarts.incrementAndGet();
-                            assertEquals(List.of("first:DB", "second:DB", "first:SERVER", "second:SERVER"), callbacks);
-                        }
-
-                        @Override
-                        public void stop() {
-                            dependency.stop();
-                        }
-                    })
+                    .dependsOn(dependency)
                     .containerCustomizer((type, container) -> {
-                        callbacks.add("first:" + type);
+                        assertFalse(dependency.isRunning(), "Customize containers before starting dependencies");
+                        events.add("first:" + type);
                         if (type == ContainerType.DB) {
                             database.set(container);
                             container.withCommand("postgres", "-c", "max_connections=125");
                         }
                     })
                     .containerCustomizer((type, container) -> {
-                        callbacks.add("second:" + type);
+                        events.add("second:" + type);
                         if (type == ContainerType.DB) {
                             container.withCommand("postgres", "-c", "max_connections=175");
                         }
@@ -99,15 +84,12 @@ class DockerCustomizerLifecycleTest {
                     });
             try {
                 concord.start();
-                assertTrue(dependencyStarts.get() >= 1);
                 assertTrue(dependency.isRunning());
-                assertEquals(List.of("first:DB", "second:DB", "first:SERVER", "second:SERVER"), callbacks);
-                assertFalse(callbacks.contains("first:AGENT"));
-                assertFalse(callbacks.contains("second:AGENT"));
                 var result = database.get().execInContainer("psql", "-U", "postgres", "-tAc", "show max_connections");
                 assertEquals(0, result.getExitCode(), result.getStderr());
                 assertEquals("175", result.getStdout().trim());
-                assertEquals(List.of("before:DB", "after:DB", "before:SERVER", "after:SERVER"), events);
+                assertEquals(List.of("first:DB", "second:DB", "first:SERVER", "second:SERVER",
+                        "before:DB", "after:DB", "before:SERVER", "after:SERVER"), events);
             } finally {
                 concord.close();
             }
