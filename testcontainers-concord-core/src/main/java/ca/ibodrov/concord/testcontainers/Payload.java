@@ -21,13 +21,12 @@ package ca.ibodrov.concord.testcontainers;
  */
 
 import ca.ibodrov.concord.testcontainers.Concord.Mode;
-import com.walmartlabs.concord.common.IOUtils;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class Payload {
@@ -39,7 +38,7 @@ public class Payload {
      * Sets the content of the main concord.yml file.
      */
     public Payload concordYml(String content) {
-        input.put("concord.yml", content.getBytes());
+        input.put("concord.yml", content.getBytes(StandardCharsets.UTF_8));
         return this;
     }
 
@@ -89,7 +88,7 @@ public class Payload {
     public Payload resource(String name, URL url) throws IOException {
         byte[] ab;
         try (InputStream in = url.openStream()) {
-            ab = IOUtils.toByteArray(in);
+            ab = in.readAllBytes();
         }
         return file(name, ab);
     }
@@ -128,16 +127,9 @@ public class Payload {
      *                to connect before it starts running.
      */
     public Payload remoteDebug(int port, boolean suspend) {
-        String template = "{ \"jvmArgs\": [\"-Xdebug\", \"-Xrunjdwp:transport=dt_socket,address=%d,server=y,suspend=%s\"] }";
+        String template = "{ \"jvmArgs\": [\"-agentlib:jdwp=transport=dt_socket,address=%d,server=y,suspend=%s\"] }";
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try {
-            baos.write(String.format(template, port, suspend ? 'y' : 'n').getBytes());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        input.put("_agent.json", baos.toByteArray());
+        input.put("_agent.json", template.formatted(port, suspend ? 'y' : 'n').getBytes(StandardCharsets.UTF_8));
         return this;
     }
 

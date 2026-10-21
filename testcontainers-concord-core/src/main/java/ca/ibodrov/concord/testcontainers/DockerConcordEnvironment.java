@@ -102,8 +102,7 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
                 .withImagePullPolicy(pullPolicy)
                 .withAccessToHost(hostAccessible)
                 .withEnv("DB_URL", "jdbc:postgresql://db:5432/postgres")
-                .withEnv("CONCORD_CFG_FILE", CONCORD_CFG_FILE)
-                .withCopyFileToContainer(MountableFile.forHostPath(configFile, 0644), CONCORD_CFG_FILE)
+                .withEnv("CONCORD_CFG_FILE", CONCORD_CFG_FILE).withCopyToContainer(MountableFile.forHostPath(configFile, 0644), CONCORD_CFG_FILE)
                 .withNetworkAliases("server")
                 .withNetwork(this.network)
                 .withExposedPorts(8001)
@@ -111,7 +110,7 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
 
         String serverExtDirectory = opts.serverExtDirectory();
         if (serverExtDirectory != null) {
-            server.withCopyFileToContainer(MountableFile.forHostPath(serverExtDirectory), "/opt/concord/server/ext");
+            server.withCopyToContainer(MountableFile.forHostPath(serverExtDirectory), "/opt/concord/server/ext");
         }
 
         if (opts.sharedContainerDir() != null) {
@@ -124,7 +123,7 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
             if (!src.startsWith("/")) {
                 src = System.getProperty("user.dir") + "/" + src;
             }
-            server.withCopyFileToContainer(MountableFile.forHostPath(src), "/opt/concord/server/classes/");
+            server.withCopyToContainer(MountableFile.forHostPath(src), "/opt/concord/server/classes/");
         }
 
         if (opts.streamServerLogs()) {
@@ -139,8 +138,7 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
                 .withNetwork(this.network)
                 .withEnv("SERVER_API_BASE_URL", "http://server:8001")
                 .withEnv("SERVER_WEBSOCKET_URL", "ws://server:8001/websocket")
-                .withEnv("CONCORD_CFG_FILE", CONCORD_CFG_FILE)
-                .withCopyFileToContainer(MountableFile.forHostPath(configFile, 0644), CONCORD_CFG_FILE);
+                .withEnv("CONCORD_CFG_FILE", CONCORD_CFG_FILE).withCopyToContainer(MountableFile.forHostPath(configFile, 0644), CONCORD_CFG_FILE);
 
         if (opts.streamAgentLogs()) {
             Slf4jLogConsumer serverLogConsumer = new Slf4jLogConsumer(log);
@@ -328,7 +326,7 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
             s = s.replace("%%agentToken%%", Utils.randomToken());
             s = s.replace("%%persistentWorkDir%%", persistentWorkDir != null ? persistentWorkDir.toString() : "");
             s = s.replace("%%extra%%", extraConfigurationSupplier != null ? extraConfigurationSupplier.get() : "");
-            Files.write(dst, s.getBytes(), StandardOpenOption.TRUNCATE_EXISTING);
+            Files.writeString(dst, s, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING);
             return dst.toAbsolutePath();
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -437,7 +435,6 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
     }
 
     private static void mountMavenConfigurationFile(GenericContainer<?> container, String src) {
-        container.withEnv("CONCORD_MAVEN_CFG", "/opt/concord/conf/mvn.json")
-                .withCopyFileToContainer(MountableFile.forHostPath(src), "/opt/concord/conf/mvn.json");
+        container.withEnv("CONCORD_MAVEN_CFG", "/opt/concord/conf/mvn.json").withCopyToContainer(MountableFile.forHostPath(src), "/opt/concord/conf/mvn.json");
     }
 }

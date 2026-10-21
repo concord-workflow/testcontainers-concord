@@ -1,19 +1,20 @@
 # Testcontainers Integration for Concord
 
-Provides a JUnit test rules to run Concord containers using
+Provides a JUnit 5 extension to run Concord containers using
 [Testcontainers](https://www.testcontainers.org/).
 
+## Requirements
+
+Java 25 or newer is required to build and use the next release. Artifacts are
+compiled with `--release 25`, and CI runs on Temurin 25. The Maven wrapper uses
+Maven 3.9; select a JDK 25 installation with `JAVA_HOME` before running `./mvnw`.
+
+This requirement applies to the test JVM. Concord Server and Agent Docker images
+keep their own Java runtimes; CI pins those images to `2.46.0`.
+
+Payload text and generated configuration files use UTF-8.
+
 ## Usage
-
-```xml
-<dependency>
-    <groupId>ca.ibodrov.concord</groupId>
-    <artifactId>testcontainers-concord-junit4</artifactId>
-    <version>...</version>
-</dependency>
-```
-
-or
 
 ```xml
 <dependency>
@@ -24,10 +25,14 @@ or
 ```
 
 ```java
+import ca.ibodrov.concord.testcontainers.junit5.ConcordRule;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+
 public class MyTest {
 
-    @Rule
-    public ConcordRule concord = new ConcordRule();
+    @RegisterExtension
+    public static ConcordRule concord = new ConcordRule();
 
     @Test
     public void test() {
@@ -50,10 +55,17 @@ export TESTCONTAINERS_CONCORD_AGENT_IMAGE=myregistry/myowner/concord-agent:custo
 $ ./mvnw clean install
 ```
 
-CI pins the Server and Agent images to `2.25.1`, matching `concord.version` in
+CI pins the Server and Agent images to `2.46.0`, matching `concord.version` in
 `pom.xml`. Update these workflow overrides when upgrading that dependency.
 
-See [test cases](./src/test/java/ca/ibodrov/concord/testcontainers/RuleTest.java) for
+The generated Docker configuration sets `websockets.requirePermission = false`
+for its userless agent token, following Concord's
+[2.45 migration guidance](https://github.com/walmartlabs/concord/blob/2.46.0/CHANGELOG.md#2450---2026-08-24).
+API-key authentication remains required, but the additional per-user
+`agentWebsocket` permission check is disabled for this test server. Remote servers
+are not reconfigured.
+
+See [test cases](./testcontainers-concord-junit5/src/test/java/ca/ibodrov/concord/testcontainers/junit5/ConcordRuleTest.java) for
 details.
 
 ### Waiting for process status
@@ -69,6 +81,10 @@ The limit covers HTTP requests, response-body reads, and polling delays.
 Expiration cancels outstanding work and throws `IllegalStateException` without
 changing the shared API client's settings. API errors can still fail earlier
 under the existing retry limit.
+
+Status polling and process-log streaming use daemon virtual threads. They do not
+keep the JVM alive: finish your waits and close `Concord` before exiting. The
+JUnit 5 extension manages cleanup automatically.
 
 ### Database initialization and logs
 
@@ -94,8 +110,8 @@ You need to provide the API's base URL and the token:
 ```java
 public class MyTest {
 
-    @Rule
-    public ConcordRule concord = new ConcordRule()
+    @RegisterExtension
+    public static ConcordRule concord = new ConcordRule()
             .mode(Concord.Mode.REMOTE)
             .apiBaseUrl("http://localhost:8001")
             .apiToken("...");
@@ -109,13 +125,18 @@ public class MyTest {
 
 ## Local Mode
 
-Local mode starts Concord Server and Concord Agent in the current JVM:
+Local mode is intended to start Concord Server and Concord Agent in the current JVM.
+
+**Known limitation:** upgrading to Concord `2.46.0` does not fix local startup.
+The current bootstrap supplies no modules to `ConcordServer.withModules()`, so it
+fails Guice configuration with missing server bindings. The local integration
+test remains disabled.
 
 ```java
 public class MyTest {
 
-    @Rule
-    public ConcordRule concord = new ConcordRule()
+    @RegisterExtension
+    public static ConcordRule concord = new ConcordRule()
             .mode(Concord.Mode.LOCAL);
 
     @Test
