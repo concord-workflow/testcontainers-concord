@@ -32,6 +32,7 @@ import org.testcontainers.containers.Network;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -75,6 +76,7 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
     private boolean hostAccessible;
 
     private List<ContainerListener> containerListeners;
+    private List<BiConsumer<ContainerType, GenericContainer<?>>> containerCustomizers;
 
     private ConcordEnvironment environment;
 
@@ -97,7 +99,9 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
      */
     @Override
     public void close() {
-        environment.stop();
+        if (environment != null) {
+            environment.stop();
+        }
         ProcessLogStreamers.stop();
     }
 
@@ -531,6 +535,38 @@ public class Concord<T extends Concord<T>> implements AutoCloseable {
         }
         this.containerListeners.add(listener);
         return (T) this;
+    }
+
+    /**
+     * Adds a Docker container configuration callback, also available on ConcordRule.
+     * Each callback receives the actual container after normal configuration,
+     * once per enabled container during environment initialization. Callbacks run
+     * in registration order; later callbacks can override earlier settings.
+     * All enabled containers are configured before extra containers or dependencies
+     * start. Existing {@link ContainerListener} events are unchanged.
+     * The agent is omitted when {@link #startAgent(boolean)} is {@code false}.
+     * Ignored in {@link Mode#LOCAL} and {@link Mode#REMOTE}.
+     * <p>
+     * Use normal Testcontainers APIs for environment variables, commands, mounts,
+     * and create-command modifiers. Modify the existing Docker HostConfig to
+     * preserve other settings. Callbacks must not start containers.
+     * A callback failure aborts initialization with the original exception and
+     * cleans up resources created by this initialization, not caller dependencies.
+     *
+     * @param customizer configuration callback; must not be null
+     * @return this configuration
+     */
+    public T containerCustomizer(BiConsumer<ContainerType, GenericContainer<?>> customizer) {
+        Objects.requireNonNull(customizer, "customizer");
+        if (this.containerCustomizers == null) {
+            this.containerCustomizers = new ArrayList<>();
+        }
+        this.containerCustomizers.add(customizer);
+        return (T) this;
+    }
+
+    List<BiConsumer<ContainerType, GenericContainer<?>>> containerCustomizers() {
+        return containerCustomizers == null ? Collections.emptyList() : containerCustomizers;
     }
 
     public T agentBindMount(String source, String dest) {
