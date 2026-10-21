@@ -1,6 +1,6 @@
 # Testcontainers Integration for Concord
 
-Provides a JUnit test rules to run Concord containers using
+Provides a JUnit 5 extension to run Concord containers using
 [Testcontainers](https://www.testcontainers.org/).
 
 ## Requirements
@@ -17,26 +17,20 @@ keep their own Java runtimes; CI continues to pin those images to `2.25.1`.
 ```xml
 <dependency>
     <groupId>ca.ibodrov.concord</groupId>
-    <artifactId>testcontainers-concord-junit4</artifactId>
-    <version>...</version>
-</dependency>
-```
-
-or
-
-```xml
-<dependency>
-    <groupId>ca.ibodrov.concord</groupId>
     <artifactId>testcontainers-concord-junit5</artifactId>
     <version>...</version>
 </dependency>
 ```
 
 ```java
+import ca.ibodrov.concord.testcontainers.junit5.ConcordRule;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+
 public class MyTest {
 
-    @Rule
-    public ConcordRule concord = new ConcordRule();
+    @RegisterExtension
+    public static ConcordRule concord = new ConcordRule();
 
     @Test
     public void test() {
@@ -62,7 +56,7 @@ $ ./mvnw clean install
 CI pins the Server and Agent images to `2.25.1`, matching `concord.version` in
 `pom.xml`. Update these workflow overrides when upgrading that dependency.
 
-See [test cases](./src/test/java/ca/ibodrov/concord/testcontainers/RuleTest.java) for
+See [test cases](./testcontainers-concord-junit5/src/test/java/ca/ibodrov/concord/testcontainers/junit5/ConcordRuleTest.java) for
 details.
 
 ### Waiting for process status
@@ -103,8 +97,8 @@ You need to provide the API's base URL and the token:
 ```java
 public class MyTest {
 
-    @Rule
-    public ConcordRule concord = new ConcordRule()
+    @RegisterExtension
+    public static ConcordRule concord = new ConcordRule()
             .mode(Concord.Mode.REMOTE)
             .apiBaseUrl("http://localhost:8001")
             .apiToken("...");
@@ -123,8 +117,8 @@ Local mode starts Concord Server and Concord Agent in the current JVM:
 ```java
 public class MyTest {
 
-    @Rule
-    public ConcordRule concord = new ConcordRule()
+    @RegisterExtension
+    public static ConcordRule concord = new ConcordRule()
             .mode(Concord.Mode.LOCAL);
 
     @Test

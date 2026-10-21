@@ -128,7 +128,7 @@ public class Payload {
      *                to connect before it starts running.
      */
     public Payload remoteDebug(int port, boolean suspend) {
-        String template = "{ \"jvmArgs\": [\"-Xdebug\", \"-Xrunjdwp:transport=dt_socket,address=%d,server=y,suspend=%s\"] }";
+        String template = "{ \"jvmArgs\": [\"-agentlib:jdwp=transport=dt_socket,address=%d,server=y,suspend=%s\"] }";
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try {

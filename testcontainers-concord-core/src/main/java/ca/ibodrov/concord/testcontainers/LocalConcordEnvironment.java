@@ -34,7 +34,7 @@ import org.testcontainers.lifecycle.Startable;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -199,7 +199,7 @@ public class LocalConcordEnvironment implements ConcordEnvironment {
     private static void waitForHttp(String urlStr, long timeout) throws IOException {
         long t0 = System.currentTimeMillis();
 
-        URL url = new URL(urlStr);
+        var url = URI.create(urlStr).toURL();
 
         while (true) {
             long t1 = System.currentTimeMillis();
