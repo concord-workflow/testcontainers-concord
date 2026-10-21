@@ -50,8 +50,27 @@ export TESTCONTAINERS_CONCORD_AGENT_IMAGE=myregistry/myowner/concord-agent:custo
 $ ./mvnw clean install
 ```
 
+CI pins the Server and Agent images to `2.25.1`, matching `concord.version` in
+`pom.xml`. Update these workflow overrides when upgrading that dependency.
+
 See [test cases](./src/test/java/ca/ibodrov/concord/testcontainers/RuleTest.java) for
 details.
+
+### Database initialization and logs
+
+In Docker and local modes, use `dbInitScriptPath` to execute a classpath SQL
+resource before the Concord Server starts, and `streamDbLogs` to stream database
+logs through SLF4J:
+
+```java
+Concord<?> concord = new Concord<>()
+        .dbInitScriptPath("/db/init.sql")
+        .streamDbLogs(true);
+```
+
+Place the script at `src/test/resources/db/init.sql`. It runs as part of
+PostgreSQL's initialization of a fresh database, before Concord's schema
+migrations. Database log streaming is disabled by default.
 
 ## Remote Mode
 

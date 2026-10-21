@@ -84,6 +84,16 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
 
         boolean hostAccessible = opts.hostAccessible();
 
+        String dbInitScriptPath = opts.dbInitScriptPath();
+        if (dbInitScriptPath != null) {
+            DatabaseInit.addInitScriptFromClassPath(db, dbInitScriptPath, "init.sql");
+        }
+
+        if (opts.streamDbLogs()) {
+            Slf4jLogConsumer dbLogConsumer = new Slf4jLogConsumer(log);
+            db.withLogConsumer(dbLogConsumer);
+        }
+
         this.server = new GenericContainer<>(opts.serverImage())
                 .dependsOn(db)
                 .withImagePullPolicy(pullPolicy)
@@ -227,6 +237,7 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
         }
 
         startContainer(ContainerType.DB, this.db);
+
         startContainer(ContainerType.SERVER, this.server);
 
         if (startAgent) {
