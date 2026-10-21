@@ -50,6 +50,9 @@ export TESTCONTAINERS_CONCORD_AGENT_IMAGE=myregistry/myowner/concord-agent:custo
 $ ./mvnw clean install
 ```
 
+CI pins the Server and Agent images to `2.25.1`, matching `concord.version` in
+`pom.xml`. Update these workflow overrides when upgrading that dependency.
+
 See [test cases](./src/test/java/ca/ibodrov/concord/testcontainers/RuleTest.java) for
 details.
 
