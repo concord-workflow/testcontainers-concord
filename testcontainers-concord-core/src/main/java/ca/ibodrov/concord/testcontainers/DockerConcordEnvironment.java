@@ -326,7 +326,7 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
             s = s.replace("%%agentToken%%", Utils.randomToken());
             s = s.replace("%%persistentWorkDir%%", persistentWorkDir != null ? persistentWorkDir.toString() : "");
             s = s.replace("%%extra%%", extraConfigurationSupplier != null ? extraConfigurationSupplier.get() : "");
-            Files.write(dst, s.getBytes(), StandardOpenOption.TRUNCATE_EXISTING);
+            Files.writeString(dst, s, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING);
             return dst.toAbsolutePath();
         } catch (IOException e) {
             throw new RuntimeException(e);

@@ -46,7 +46,8 @@ public class ProcessLogStreamers {
     private void doStart(ApiClient client, UUID instanceId) {
         synchronized (this) {
             if (executor == null) {
-                this.executor = Executors.newCachedThreadPool();
+                this.executor = Executors.newThreadPerTaskExecutor(
+                        Thread.ofVirtual().name("concord-process-log-", 0).factory());
             }
 
             executor.submit(new ProcessLogStreamer(client, instanceId));

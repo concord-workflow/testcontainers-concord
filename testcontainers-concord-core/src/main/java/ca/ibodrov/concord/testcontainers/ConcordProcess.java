@@ -45,11 +45,8 @@ public class ConcordProcess {
 
     private static final Logger log = LoggerFactory.getLogger(ConcordProcess.class);
     private static final Duration DEFAULT_TIMEOUT = Duration.ofMinutes(5);
-    private static final ExecutorService STATUS_WAIT_EXECUTOR = Executors.newCachedThreadPool(r -> {
-        Thread thread = new Thread(r, "concord-status-wait");
-        thread.setDaemon(true);
-        return thread;
-    });
+    private static final ExecutorService STATUS_WAIT_EXECUTOR = Executors.newThreadPerTaskExecutor(
+            Thread.ofVirtual().name("concord-status-wait-", 0).factory());
 
     private final ApiClient client;
     private final UUID instanceId;
@@ -320,17 +317,12 @@ public class ConcordProcess {
             if (System.nanoTime() - startTime >= timeoutNanos) {
                 throw statusTimeout(startTime, status, more);
             }
-            Throwable cause = e.getCause();
-            if (cause instanceof ApiException) {
-                throw (ApiException) cause;
+            switch (e.getCause()) {
+                case ApiException cause -> throw cause;
+                case RuntimeException cause -> throw cause;
+                case Error cause -> throw cause;
+                default -> throw new IllegalStateException(e.getCause());
             }
-            if (cause instanceof RuntimeException) {
-                throw (RuntimeException) cause;
-            }
-            if (cause instanceof Error) {
-                throw (Error) cause;
-            }
-            throw new IllegalStateException(cause);
         } finally {
             request.cancelled = true;
             result.cancel(true);

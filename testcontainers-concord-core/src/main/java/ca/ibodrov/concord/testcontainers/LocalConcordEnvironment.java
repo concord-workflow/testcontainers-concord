@@ -181,7 +181,7 @@ public class LocalConcordEnvironment implements ConcordEnvironment {
         if (pathToRunnerV2 != null) {
             s = s.replaceAll("RUNNER_V2_PATH", pathToRunnerV2);
         }
-        Files.write(dst, s.getBytes(), StandardOpenOption.TRUNCATE_EXISTING);
+        Files.writeString(dst, s, StandardOpenOption.TRUNCATE_EXISTING);
 
         return dst;
     }

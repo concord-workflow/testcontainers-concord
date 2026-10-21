@@ -12,6 +12,8 @@ Maven 3.9; select a JDK 25 installation with `JAVA_HOME` before running `./mvnw`
 This requirement applies to the test JVM. Concord Server and Agent Docker images
 keep their own Java runtimes; CI continues to pin those images to `2.25.1`.
 
+Payload text and generated configuration files use UTF-8.
+
 ## Usage
 
 ```xml
@@ -72,6 +74,10 @@ The limit covers HTTP requests, response-body reads, and polling delays.
 Expiration cancels outstanding work and throws `IllegalStateException` without
 changing the shared API client's settings. API errors can still fail earlier
 under the existing retry limit.
+
+Status polling and process-log streaming use daemon virtual threads. They do not
+keep the JVM alive: finish your waits and close `Concord` before exiting. The
+JUnit 5 extension manages cleanup automatically.
 
 ### Database initialization and logs
 
