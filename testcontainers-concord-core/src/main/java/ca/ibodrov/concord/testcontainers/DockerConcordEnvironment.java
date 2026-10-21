@@ -64,6 +64,8 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
 
     private final List<GenericContainer<?>> extraContainers;
 
+    private final List<GenericContainer<?>> startedExtraContainers = new ArrayList<>();
+    private final List<Path> generatedFiles = new ArrayList<>(2);
     private String apiToken;
 
     public DockerConcordEnvironment(Concord<?> opts) {
@@ -71,6 +73,7 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
 
         Path persistentWorkDir = opts.persistentWorkDir();
         Path configFile = prepareConfigurationFile(persistentWorkDir, opts.extraConfigurationSupplier());
+        generatedFiles.add(configFile);
         log.info("Using CONCORD_CFG_FILE={}", configFile);
 
         ImagePullPolicy pullPolicy = pullPolicy(opts);
@@ -172,9 +175,10 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
                 }
             }
 
-            String cfg = createMavenConfigurationFile(opts).toAbsolutePath().toString();
-            mountMavenConfigurationFile(server, cfg);
-            mountMavenConfigurationFile(agent, cfg);
+            Path cfg = createMavenConfigurationFile(opts).toAbsolutePath();
+            generatedFiles.add(cfg);
+            mountMavenConfigurationFile(server, cfg.toString());
+            mountMavenConfigurationFile(agent, cfg.toString());
         }
 
         List<Startable> dependsOn = opts.dependsOn();
@@ -198,11 +202,22 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
 
         this.containerListeners = opts.containerListeners() != null ? new ArrayList<>(opts.containerListeners()) : Collections.emptyList();
 
-        Function<Network, List<GenericContainer<?>>> extraContainerSupplier = opts.extraContainerSupplier();
-        if (extraContainerSupplier != null) {
-            this.extraContainers = extraContainerSupplier.apply(this.network);
-        } else {
-            this.extraContainers = Collections.emptyList();
+        try {
+            // Configure every enabled container before a dependency can start it.
+            // Extra containers are supplied only after customization succeeds.
+            customizeContainer(opts, ContainerType.DB, db);
+            customizeContainer(opts, ContainerType.SERVER, server);
+            if (startAgent) {
+                customizeContainer(opts, ContainerType.AGENT, agent);
+            }
+
+            Function<Network, List<GenericContainer<?>>> extraContainerSupplier = opts.extraContainerSupplier();
+            this.extraContainers = extraContainerSupplier != null
+                    ? extraContainerSupplier.apply(this.network) : Collections.emptyList();
+        } catch (RuntimeException | Error e) {
+            closeResource(network, e);
+            deleteGeneratedFiles(e);
+            throw e;
         }
     }
 
@@ -232,30 +247,77 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
 
     @Override
     public void start() {
-        for (GenericContainer<?> c : this.extraContainers) {
-            c.start();
-        }
+        try {
+            for (GenericContainer<?> c : this.extraContainers) {
+                if (!c.isRunning()) {
+                    startedExtraContainers.add(c);
+                    c.start();
+                }
+            }
 
-        startContainer(ContainerType.DB, this.db);
+            startContainer(ContainerType.DB, this.db);
+            startContainer(ContainerType.SERVER, this.server);
 
-        startContainer(ContainerType.SERVER, this.server);
-
-        if (startAgent) {
-            startContainer(ContainerType.AGENT, this.agent);
+            if (startAgent) {
+                startContainer(ContainerType.AGENT, this.agent);
+            }
+        } catch (RuntimeException | Error e) {
+            stopResources(e);
+            throw e;
         }
     }
 
     @Override
     public void stop() {
-        this.agent.stop();
-        this.server.stop();
-        this.db.stop();
-
-        for (GenericContainer<?> c : this.extraContainers) {
-            c.stop();
+        Throwable failure = stopResources(null);
+        if (failure instanceof Error) {
+            throw (Error) failure;
         }
+        if (failure != null) {
+            throw failure instanceof RuntimeException
+                    ? (RuntimeException) failure : new RuntimeException("Failed to stop Docker environment", failure);
+        }
+    }
 
-        this.network.close();
+    private Throwable stopResources(Throwable failure) {
+        failure = closeResource(agent, failure);
+        failure = closeResource(server, failure);
+        failure = closeResource(db, failure);
+        for (int i = startedExtraContainers.size() - 1; i >= 0; i--) {
+            failure = closeResource(startedExtraContainers.get(i), failure);
+        }
+        startedExtraContainers.clear();
+        failure = closeResource(network, failure);
+        return deleteGeneratedFiles(failure);
+    }
+
+    private Throwable deleteGeneratedFiles(Throwable failure) {
+        for (Path file : generatedFiles) {
+            try {
+                Files.deleteIfExists(file);
+            } catch (IOException | RuntimeException e) {
+                if (failure == null) {
+                    failure = e;
+                } else if (failure != e) {
+                    failure.addSuppressed(e);
+                }
+            }
+        }
+        return failure;
+    }
+
+    private static Throwable closeResource(AutoCloseable resource, Throwable failure) {
+        try {
+            resource.close();
+        } catch (Exception | Error e) {
+            if (failure == null) {
+                return e;
+            }
+            if (failure != e) {
+                failure.addSuppressed(e);
+            }
+        }
+        return failure;
     }
 
     private static Path prepareConfigurationFile(Path persistentWorkDir, Supplier<String> extraConfigurationSupplier) {
@@ -270,6 +332,12 @@ public class DockerConcordEnvironment implements ConcordEnvironment {
             return dst.toAbsolutePath();
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private static void customizeContainer(Concord<?> opts, ContainerType type, GenericContainer<?> container) {
+        for (var customizer : opts.containerCustomizers()) {
+            customizer.accept(type, container);
         }
     }
 
