@@ -56,6 +56,20 @@ CI pins the Server and Agent images to `2.25.1`, matching `concord.version` in
 See [test cases](./src/test/java/ca/ibodrov/concord/testcontainers/RuleTest.java) for
 details.
 
+### Waiting for process status
+
+`waitForStatus`, `expectStatus`, and `waitForChildStatus` use a five-minute
+timeout by default. Pass a `Duration` to choose a different limit:
+
+```java
+process.expectStatus(Duration.ofMinutes(10), ProcessEntry.StatusEnum.FINISHED);
+```
+
+The limit covers HTTP requests, response-body reads, and polling delays.
+Expiration cancels outstanding work and throws `IllegalStateException` without
+changing the shared API client's settings. API errors can still fail earlier
+under the existing retry limit.
+
 ### Database initialization and logs
 
 In Docker and local modes, use `dbInitScriptPath` to execute a classpath SQL
