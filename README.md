@@ -3,6 +3,15 @@
 Provides a JUnit test rules to run Concord containers using
 [Testcontainers](https://www.testcontainers.org/).
 
+## Requirements
+
+Java 25 or newer is required to build and use the next release. Artifacts are
+compiled with `--release 25`, and CI runs on Temurin 25. The Maven wrapper uses
+Maven 3.9; select a JDK 25 installation with `JAVA_HOME` before running `./mvnw`.
+
+This requirement applies to the test JVM. Concord Server and Agent Docker images
+keep their own Java runtimes; CI continues to pin those images to `2.25.1`.
+
 ## Usage
 
 ```xml
